@@ -98,9 +98,15 @@ by digit:
   red tint).
 - **Inputs:** always `TextField`, always labelled, validation in `helperText` via
   `RHFTextField`. Never a raw `<input>` — it would bypass the theme.
-- **Icon buttons stay circular.** The theme pins `MuiIconButton` to `borderRadius: 50%` with
-  `flexShrink: 0` and a 1:1 aspect ratio — icon buttons live in flex rows and narrow table cells,
-  where a shrinking box turns the hover ripple into an ellipse. Never override the radius.
+- **Icon buttons are square, and sized to what they sit beside.** The theme pins `MuiIconButton`
+  to `borderRadius: 50%` + `flexShrink: 0`, and fixes the box: **40px** (`sizeMedium`, matching a
+  `size="small"` TextField or Button) and **32px** (`sizeSmall`, for table cells). MUI otherwise
+  derives the box from padding + glyph size, which lands a few pixels short of the control beside
+  it and reads as a misaligned row. Never override the radius or the box.
+- **Rows of mixed controls set `alignItems` explicitly.** A `Stack direction="row"` defaults to
+  `stretch`, which leaves a button and two icons on three different baselines. Use `center` when
+  every control is single-line (a table's action cell), and `flex-start` when a field carries
+  helper text — centring would then drop the icon below the input it belongs to.
 - **Password inputs use `PasswordField`**, never a bare `type="password"`: masked by default with
   a reveal toggle. These are typed on a phone in public, and a judge's password can never be
   reset, so checking what was typed has to be possible on both sides.

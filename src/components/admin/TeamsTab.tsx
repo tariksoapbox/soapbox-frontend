@@ -109,7 +109,11 @@ export function TeamsTab() {
                   spacing={2}
                   sx={{ alignItems: { lg: 'flex-start' } }}
                 >
-                  <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{ flex: 1, minWidth: 0, alignItems: 'flex-start' }}
+                  >
                     {team.bibNumber !== null && (
                       <Box
                         sx={{
@@ -129,6 +133,10 @@ export function TeamsTab() {
                     )}
                     <TeamNameField team={team} />
                   </Stack>
+                  {/* `flex-start`, not `center`: RunTimeField carries helper
+                      text under its input, so centring would drop the icon
+                      below the input it belongs to. Aligned to the top, the
+                      theme's 40px icon box matches the 40px field exactly. */}
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                     <RunTimeField team={team} />
                     <Tooltip title={copy.teams.confirmDeleteTitle}>

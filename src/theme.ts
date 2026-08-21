@@ -184,14 +184,17 @@ export const theme = createTheme({
     },
     MuiIconButton: {
       styleOverrides: {
-        root: {
-          // Icon buttons sit inside flex rows and narrow table cells, where a
-          // shrinking box turns the hover ripple into an ellipse. Pin the circle
-          // and refuse to shrink.
-          borderRadius: '50%',
-          flexShrink: 0,
-          aspectRatio: '1 / 1',
-        },
+        // Icon buttons sit inside flex rows and narrow table cells, where a
+        // shrinking box turns the hover ripple into an ellipse.
+        root: { borderRadius: '50%', flexShrink: 0 },
+        // MUI derives an icon button's box from padding + glyph size, so it
+        // lands a few pixels short of the control beside it and the row reads
+        // as misaligned. Pinning both sizes to a square that matches the
+        // controls they sit next to — 40px for a `size="small"` TextField or
+        // Button, 32px for a table cell — is what puts every icon on the row's
+        // line. Squareness also guarantees the hover ripple stays a circle.
+        sizeMedium: { width: 40, height: 40 },
+        sizeSmall: { width: 32, height: 32 },
       },
     },
     MuiTableCell: {

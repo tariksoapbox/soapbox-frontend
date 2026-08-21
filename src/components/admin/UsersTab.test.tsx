@@ -151,6 +151,24 @@ describe('UsersTab', () => {
     });
   });
 
+  it('puts every row action on one centre line, with square icon buttons', async () => {
+    setup({ 'GET /admin/users': { users: [me, user()] } });
+    await screen.findByText('Sudija 1');
+    const actions = within(row('Sudija 1')).getAllByRole('button');
+
+    // The Stack used to default to `stretch`, which left the button and the two
+    // icons on three different baselines.
+    const strip = actions[0]!.parentElement!;
+    expect(getComputedStyle(strip).alignItems).toBe('center');
+
+    // Square, so the hover ripple is a circle and not an ellipse.
+    for (const icon of actions.filter((b) => b.getAttribute('aria-label'))) {
+      const { width, height, borderRadius } = getComputedStyle(icon);
+      expect(width).toBe(height);
+      expect(borderRadius).toBe('50%');
+    }
+  });
+
   it('explains that editing is safe and deleting is not', async () => {
     setup({ 'GET /admin/users': { users: [me] } });
     expect(

@@ -107,6 +107,17 @@ describe('TeamsTab', () => {
     await waitFor(() => expect(api.calls.length).toBeGreaterThan(before));
   });
 
+  it('sizes the row icon to the field beside it, so it sits on the input line', async () => {
+    setup({ 'GET /teams': { teams: [team()] } });
+    await screen.findByDisplayValue('Leteći Bosanci');
+    const del = screen.getByRole('button', { name: /Obrisati ekipu\? Leteći Bosanci/ });
+    const { width, height } = getComputedStyle(del);
+    // 40px is the height of the `size="small"` run-time field it sits next to;
+    // the row aligns to flex-start because that field carries helper text.
+    expect(width).toBe('40px');
+    expect(height).toBe('40px');
+  });
+
   it('says so when there are no teams yet', async () => {
     setup({ 'GET /teams': { teams: [] } });
     expect(await screen.findByText('Još nema ekipa. Dodajte prvu.')).toBeInTheDocument();

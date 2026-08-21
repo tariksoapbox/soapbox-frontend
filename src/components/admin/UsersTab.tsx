@@ -122,7 +122,14 @@ export function UsersTab() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                      {/* Every control here is single-line, so centre them:
+                          without this the Stack stretches and the button and
+                          the two icons sit on three different baselines. */}
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: 'center', justifyContent: 'flex-end' }}
+                      >
                         <Button
                           size="small"
                           color="secondary"
