@@ -1,0 +1,33 @@
+# Render blueprint for the web app — OPTIONAL.
+#
+# Use this only if you want both apps on Render. Hosting the frontend on Vercel
+# instead is recommended on the free tier: a Vercel deployment never sleeps, so
+# a judge never waits on a cold start. See the README for the comparison.
+#
+# This is a Node Web Service, NOT a Static Site: the app proxies /api/* to the
+# backend (see next.config.ts), and a rewrite needs a server to perform it.
+services:
+  - type: web
+    name: soapbox-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --include=dev && npm run build
+    # `next start` reads Render's PORT and binds every interface.
+    startCommand: npm start
+    healthCheckPath: /prijava
+    envVars:
+      - key: NODE_VERSION
+        value: 24.13.0
+      - key: NODE_ENV
+        value: production
+      # The API's URL, e.g. https://soapbox-api.onrender.com. A bare hostname
+      # works too — `resolveBackendOrigin` adds the scheme. This cannot be
+      # wired with `fromService` any more: the API lives in a different
+      # repository, so it is not part of this blueprint.
+      - key: BACKEND_ORIGIN
+        sync: false
+      # `/api` is same-origin through the rewrite — do not point this at the
+      # backend's own domain, or the session cookie becomes third-party.
+      - key: NEXT_PUBLIC_API_URL
+        value: /api

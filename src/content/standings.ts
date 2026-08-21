@@ -1,0 +1,30 @@
+export const standings = {
+  title: 'Rang lista',
+  subtitle:
+    'Svaki kriterij ima svoju rang listu. Zbir tri plasmana odlučuje — manji zbir je bolji.',
+  place: 'Plasman',
+  bib: 'Br.',
+  team: 'Ekipa',
+  points: 'Bodovi',
+  rank: 'Plasman',
+  sum: 'Zbir',
+  total: 'Ukupno',
+  empty: 'Još nema ekipa.',
+  judgesOf: (submitted: number, expected: number) => `${submitted}/${expected} sudija`,
+  provisional: 'Privremeno',
+  provisionalHelp:
+    'Privremeno: rang lista se računa iz do sada poslanih ocjena i unesenih vremena.',
+  final: 'Konačno',
+  eventComplete: 'Sve ocjene i sva vremena su uneseni. Rang lista je konačna.',
+  noTime: 'Bez vremena',
+  noTimeHelp: 'Ekipa još nema prolazno vrijeme, pa nema ni ukupan plasman.',
+  live: 'Uživo',
+  updatedAt: (time: string) => `Ažurirano u ${time}`,
+  legendTitle: 'Kako se računa',
+  legend: [
+    'Pet sudija ocjenjuje kreativnost vozila i kreativnost nastupa ocjenom 1–10, pa je najviše 50 bodova po kriteriju.',
+    'Prolazno vrijeme unosi administrator; najbrža ekipa je prva.',
+    'Svaki kriterij daje zasebnu rang listu, a zbir tri plasmana određuje pobjednika — cilj je 1 + 1 + 1 = 3.',
+    'Kod izjednačenja ekipe dijele isti plasman, a sljedeći plasman se preskače.',
+  ],
+} as const;
