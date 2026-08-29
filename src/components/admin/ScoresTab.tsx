@@ -114,10 +114,33 @@ const stickyTeamColumn = {
  * run-together strip. Wide enough to breathe, narrow enough that a bigger panel
  * still scrolls rather than breaks — the team column is pinned, so growing the
  * panel costs scroll, not legibility.
+ *
+ * The padding is an explicit measurement, not a spacing step: it is derived
+ * from the field width, so it should not move when the spacing scale does.
  */
-// An explicit measurement, not a spacing step: it is derived from the field
-// width, so it should not move when the spacing scale does.
-const judgeColumn = { width: 80, maxWidth: 80, px: '14px' } as const;
+const judgeColumn = { width: 88, maxWidth: 88, px: '14px' } as const;
+
+/**
+ * The header above a judge's column.
+ *
+ * A judge's name is a **name**, not a column label, so it opts out of the
+ * theme's uppercase + `.1em` tracking: "ELVEDINA MUZAFERIJA" set that way is
+ * far wider than the column and spills into the neighbouring header, which is
+ * how two judges' surnames end up touching. Sentence case at 12px fits, reads
+ * better, and wraps onto a second line when it needs to. `overflowWrap` is the
+ * backstop for a single name longer than the column can ever hold — it breaks
+ * rather than overlapping the judge next to it.
+ */
+const judgeHeader = {
+  ...judgeColumn,
+  textTransform: 'none',
+  letterSpacing: 0,
+  fontSize: 12,
+  lineHeight: 1.3,
+  whiteSpace: 'normal',
+  overflowWrap: 'anywhere',
+  verticalAlign: 'bottom',
+} as const;
 
 function CriterionTable({
   criterion,
@@ -145,13 +168,7 @@ function CriterionTable({
                 {copy.scores.team}
               </TableCell>
               {judges.map((judge) => (
-                <TableCell
-                  key={judge.id}
-                  align="center"
-                  // Wrapping, so a long name costs height rather than pushing
-                  // every other judge off the screen.
-                  sx={{ ...judgeColumn, whiteSpace: 'normal', lineHeight: 1.25 }}
-                >
+                <TableCell key={judge.id} align="center" sx={judgeHeader}>
                   {judge.name}
                 </TableCell>
               ))}

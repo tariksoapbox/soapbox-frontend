@@ -145,9 +145,15 @@ card must not drag a total down.
 
 The score grid has a column per judge and must survive a panel growing past five. The team column
 is **pinned** (`position: sticky; left: 0`) with an opaque background, so judges scroll
-horizontally underneath it without the row losing its label. Judge headers are narrow and
-wrapping, so a long name costs height rather than pushing every other judge off screen, and row
-actions are icon-only. Any table that can grow a column per record should do the same.
+horizontally underneath it without the row losing its label, and row actions are icon-only. Any
+table that can grow a column per record should do the same.
+
+**A person's name in a header is a name, not a label.** The theme sets `MuiTableCell.head` to
+uppercase with `.1em` tracking, which is right for `EKIPA` or `UKUPNO` and wrong for
+"Elvedina Muzaferija" — set that way it is far wider than its column and spills into the
+neighbouring header, so two judges' surnames end up touching. Columns headed by a record's name
+opt out: `textTransform: 'none'`, `letterSpacing: 0`, 12px, wrapping, with
+`overflowWrap: 'anywhere'` as the backstop for a name longer than any column could hold.
 
 ## Iterating
 

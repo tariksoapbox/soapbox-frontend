@@ -69,11 +69,24 @@ describe('ScoresTab', () => {
     setup();
     await screen.findAllByText('Leteći Bosanci');
     const header = screen.getAllByRole('columnheader', { name: 'Buba Corelli' })[0]!;
-    const { paddingLeft, paddingRight, width } = getComputedStyle(header);
+    const style = getComputedStyle(header);
     // 52px field + 14px either side leaves ~28px between adjacent inputs.
-    expect(paddingLeft).toBe('14px');
-    expect(paddingRight).toBe('14px');
-    expect(width).toBe('80px');
+    expect(style.paddingLeft).toBe('14px');
+    expect(style.paddingRight).toBe('14px');
+    expect(style.width).toBe('88px');
+  });
+
+  it('sets judge names as names, so a long surname cannot spill into the next column', async () => {
+    setup();
+    await screen.findAllByText('Leteći Bosanci');
+    const header = screen.getAllByRole('columnheader', { name: 'Mate Rimac' })[0]!;
+    const style = getComputedStyle(header);
+    // The theme uppercases and tracks table headers, which made "ELVEDINA
+    // MUZAFERIJA" wider than its column and pushed it over its neighbour.
+    expect(style.textTransform).toBe('none');
+    expect(style.letterSpacing).toBe('0px');
+    expect(style.whiteSpace).toBe('normal');
+    expect(style.overflowWrap).toBe('anywhere');
   });
 
   it('lets a mark be typed straight into the grid', async () => {
