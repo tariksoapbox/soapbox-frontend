@@ -6,10 +6,11 @@ import { StandingsBoard } from '../standings/StandingsBoard';
 import { TeamsTab } from './TeamsTab';
 import { ScoresTab } from './ScoresTab';
 import { JudgesTab } from './JudgesTab';
+import { ApiKeysTab } from './ApiKeysTab';
 import { UsersTab } from './UsersTab';
 import { admin as copy } from '@/content/admin';
 
-const TABS = ['standings', 'teams', 'scores', 'judges', 'users'] as const;
+const TABS = ['standings', 'teams', 'scores', 'judges', 'users', 'apiKeys'] as const;
 type TabKey = (typeof TABS)[number];
 
 /**
@@ -40,6 +41,7 @@ export function AdminConsole() {
       {tab === 'scores' && <ScoresTab />}
       {tab === 'judges' && <JudgesTab />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'apiKeys' && <ApiKeysTab />}
     </Box>
   );
 }

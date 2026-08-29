@@ -56,6 +56,16 @@ export const userEditFormSchema = userFormSchema.extend({
 });
 export type UserEditForm = z.infer<typeof userEditFormSchema>;
 
+/** An API key is created with a label; the key itself is generated server-side. */
+export const apiKeyFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Naziv ključa mora imati najmanje 2 znaka.')
+    .max(80, 'Naziv ključa smije imati najviše 80 znakova.'),
+});
+export type ApiKeyForm = z.infer<typeof apiKeyFormSchema>;
+
 /** A judge is a name, so this is the whole form. */
 export const judgeFormSchema = z.object({
   name: z

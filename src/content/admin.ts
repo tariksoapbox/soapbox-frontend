@@ -6,6 +6,7 @@ export const admin = {
     scores: 'Ocjene',
     judges: 'Sudije',
     users: 'Administratori',
+    apiKeys: 'API',
   },
   teams: {
     title: 'Ekipe i prolazna vremena',
@@ -70,6 +71,36 @@ export const admin = {
     dialogHelp:
       'Upišite ocjenu od 1 do 10 za svakog sudiju. Prazno polje znači da ocjena još nije unesena.',
     total: 'Ukupno',
+  },
+  apiKeys: {
+    title: 'API ključevi',
+    subtitle:
+      'Druge aplikacije mogu čitati rang listu preko API-ja. Svaki ključ dajete jednoj aplikaciji i možete ga poništiti kad god želite.',
+    add: 'Novi ključ',
+    addTitle: 'Novi API ključ',
+    name: 'Naziv',
+    nameHelp: 'Čemu služi — npr. „Ekran na bini" ili „Partnerska aplikacija".',
+    created: 'Kreiran',
+    lastUsed: 'Zadnje korišten',
+    neverUsed: 'Nije korišten',
+    active: 'Aktivan',
+    revoked: 'Poništen',
+    revoke: 'Poništi',
+    revokeTitle: 'Poništiti ključ?',
+    revokeBody: (name: string) =>
+      `Aplikacija koja koristi ključ „${name}" odmah gubi pristup. Ova radnja se ne može opozvati — po potrebi kreirajte novi ključ.`,
+    empty: 'Još nema ključeva.',
+    // The plaintext exists only in the response that created it.
+    secretTitle: 'Kopirajte ključ sada',
+    secretWarning:
+      'Ovo je jedini put da vidite ključ. Ne čuvamo ga — ako ga izgubite, poništite ovaj i kreirajte novi.',
+    copy: 'Kopiraj',
+    copied: 'Kopirano',
+    done: 'Sačuvao sam ključ',
+    docsTitle: 'Kako se koristi',
+    docsIntro: 'Pošaljite ključ u zaglavlju zahtjeva:',
+    docsReturns:
+      'Vraća listu sudija, ocjenu svakog sudije za svaku ekipu po oba kriterija, prolazna vremena i trenutnu rang listu.',
   },
   users: {
     title: 'Administratori',

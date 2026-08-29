@@ -19,6 +19,7 @@ import {
   type UpdateUserInput,
 } from '@/lib/api/admin';
 import { createJudge, deleteJudge, listJudges, updateJudge } from '@/lib/api/judges';
+import { createApiKey, listApiKeys, revokeApiKey } from '@/lib/api/apiKeys';
 import type { Criterion } from '@/schemas/contracts';
 import { queryKeys, LIVE_REFETCH_MS } from './keys';
 
@@ -34,6 +35,10 @@ export function useUsers() {
 
 export function useJudges() {
   return useQuery({ queryKey: queryKeys.judges, queryFn: listJudges });
+}
+
+export function useApiKeys() {
+  return useQuery({ queryKey: queryKeys.apiKeys, queryFn: listApiKeys });
 }
 
 /** Who has voted and who has not — the admin's live view of a stalled column. */
@@ -145,6 +150,11 @@ export const useUpdateJudge = () =>
     queryKeys.judges,
     queryKeys.scoreMatrix,
   );
+
+// Keys do not touch the board, so these invalidate only their own list.
+export const useCreateApiKey = () => useAdminMutation(createApiKey, queryKeys.apiKeys);
+
+export const useRevokeApiKey = () => useAdminMutation(revokeApiKey, queryKeys.apiKeys);
 
 export const useDeleteJudge = () =>
   useAdminMutation(deleteJudge, queryKeys.judges, queryKeys.scoreMatrix);

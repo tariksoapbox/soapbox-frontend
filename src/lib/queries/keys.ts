@@ -2,6 +2,7 @@
 export const queryKeys = {
   session: ['session'] as const,
   judges: ['admin', 'judges'] as const,
+  apiKeys: ['admin', 'api-keys'] as const,
   standings: ['standings'] as const,
   teams: ['teams'] as const,
   users: ['admin', 'users'] as const,

@@ -74,6 +74,20 @@ export interface Standings {
   computedAt: string;
 }
 
+/**
+ * A key another app uses to read the board. The key itself is only ever in the
+ * response that created it — this is what survives afterwards.
+ */
+export interface ApiKey {
+  id: string;
+  name: string;
+  /** The visible head, e.g. `sbx_9f3a2b1c`, for telling two keys apart. */
+  prefix: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
 /** One judge's mark for one team and criterion. A missing entry is a blank. */
 export interface ScoreEntry {
   teamId: string;
