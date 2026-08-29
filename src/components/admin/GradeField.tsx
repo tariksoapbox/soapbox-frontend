@@ -1,62 +1,64 @@
 'use client';
 
 import { TextField } from '@mui/material';
-import { admin as copy } from '@/content/admin';
 
 /**
- * One judge's mark, typed rather than tapped.
+ * One judge's mark, typed.
  *
- * The 1–10 picker this replaces was built for a judge scoring on a phone, one
- * team at a time. Nobody does that any more: an admin transcribes a stack of
- * paper cards on a laptop, so typing `8` and tabbing to the next judge is the
- * fast path and ten buttons is the slow one.
+ * Used in the grid, where a correction has to be a couple of keystrokes and a
+ * ten-button picker per cell would not fit across a panel of judges. The
+ * dialog uses `ScorePicker` instead — that is where a whole column is set
+ * deliberately rather than patched.
  *
  * An empty field means "not written down yet" and is stored as a blank, never
- * as a zero — a missing card must not drag a total down.
+ * as a zero: a missing card must not drag a total down.
  */
 export function GradeField({
-  judgeName,
+  label,
   value,
   disabled,
+  error,
   onChange,
+  onCommit,
 }: {
-  judgeName: string;
-  value: number | null;
+  label: string;
+  /** The raw text, so a half-typed value survives a re-render. */
+  value: string;
   disabled?: boolean;
-  onChange: (points: number | null) => void;
+  error?: boolean;
+  onChange: (text: string) => void;
+  onCommit?: () => void;
 }) {
-  // Kept as the raw string so a half-typed value survives a re-render; the
-  // parent only ever hears about a valid mark or a blank.
-  const text = value === null ? '' : String(value);
-  const invalid = text !== '' && !isValidGrade(text);
-
   return (
     <TextField
-      label={copy.scores.grade(judgeName)}
-      value={text}
+      value={value}
       onChange={(e) => {
         const next = e.target.value.trim();
-        if (next === '') return onChange(null);
-        if (!/^\d{1,2}$/.test(next)) return; // reject letters and signs outright
-        const parsed = Number(next);
-        if (parsed >= 1 && parsed <= 10) onChange(parsed);
+        // Reject anything that could never become a mark, so the field cannot
+        // hold a value that would fail at save.
+        if (next !== '' && !/^\d{1,2}$/.test(next)) return;
+        if (next !== '' && Number(next) > 10) return;
+        onChange(next);
       }}
-      error={invalid}
-      helperText={invalid ? copy.scores.invalid : undefined}
+      onBlur={onCommit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+      }}
       disabled={disabled}
+      error={error}
       size="small"
-      // `inputMode` rather than `type="number"`: a number input adds spinners
-      // and swallows scroll events over the field, both of which get in the way
-      // when tabbing down a column of marks.
+      variant="outlined"
       slotProps={{
         htmlInput: {
+          // `inputMode` rather than `type="number"`: no spinners, and the
+          // scroll wheel cannot silently change a mark being hovered over.
           inputMode: 'numeric',
           maxLength: 2,
-          'aria-label': copy.scores.grade(judgeName),
-          style: { textAlign: 'center', fontVariantNumeric: 'tabular-nums' },
+          'aria-label': label,
+          style: { textAlign: 'center', fontVariantNumeric: 'tabular-nums', padding: '6px 0' },
         },
       }}
-      sx={{ width: 92 }}
+      sx={{ width: 52, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
     />
   );
 }
@@ -64,4 +66,9 @@ export function GradeField({
 /** A whole 1–10, which is the only thing a judge can award. */
 export function isValidGrade(text: string): boolean {
   return /^\d{1,2}$/.test(text) && Number(text) >= 1 && Number(text) <= 10;
+}
+
+/** What the field should show for a stored mark. */
+export function gradeText(points: number | undefined): string {
+  return points === undefined ? '' : String(points);
 }

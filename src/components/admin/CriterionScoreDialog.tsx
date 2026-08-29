@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import {
   Alert,
+  Box,
   Button,
   Chip,
   Dialog,
@@ -13,7 +14,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { GradeField } from './GradeField';
+import { ScorePicker } from '../ScorePicker';
 import { FormAlert } from '../FormAlert';
 import { admin as copy } from '@/content/admin';
 import { common, criteria } from '@/content/common';
@@ -115,24 +116,15 @@ function CriterionScoreForm({
           {judges.length === 0 ? (
             <Alert severity="warning">{copy.scores.noJudges}</Alert>
           ) : (
-            <Stack divider={<Divider flexItem />}>
+            <Stack spacing={2} divider={<Divider flexItem />}>
               {judges.map((judge) => (
-                <Stack
+                <JudgeRow
                   key={judge.id}
-                  direction="row"
-                  spacing={2}
-                  sx={{ alignItems: 'center', justifyContent: 'space-between', py: 1.25 }}
-                >
-                  <Typography variant="h6" sx={{ minWidth: 0 }}>
-                    {judge.name}
-                  </Typography>
-                  <GradeField
-                    judgeName={judge.name}
-                    value={draft.get(judge.id) ?? null}
-                    disabled={save.isPending}
-                    onChange={(points) => setDraft((prev) => new Map(prev).set(judge.id, points))}
-                  />
-                </Stack>
+                  name={judge.name}
+                  value={draft.get(judge.id) ?? null}
+                  disabled={save.isPending}
+                  onChange={(points) => setDraft((prev) => new Map(prev).set(judge.id, points))}
+                />
               ))}
             </Stack>
           )}
@@ -162,5 +154,40 @@ function CriterionScoreForm({
         </Stack>
       </DialogActions>
     </>
+  );
+}
+
+/** One judge's line: their name, their mark, and the 1–10 scale. */
+function JudgeRow({
+  name,
+  value,
+  disabled,
+  onChange,
+}: {
+  name: string;
+  value: number | null;
+  disabled: boolean;
+  onChange: (points: number | null) => void;
+}) {
+  const labelId = useId();
+  return (
+    <Box sx={{ pt: 0.5 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: 0.75 }}
+      >
+        <Typography id={labelId} variant="h6">
+          {name}
+        </Typography>
+        <Typography
+          variant="numeric"
+          sx={{ color: value === null ? 'brand.pending' : 'text.primary' }}
+        >
+          {value ?? copy.scores.pending}
+        </Typography>
+      </Stack>
+      <ScorePicker value={value} onChange={onChange} disabled={disabled} labelledBy={labelId} />
+    </Box>
   );
 }

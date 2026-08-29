@@ -24,8 +24,13 @@ function setup(routes: Routes = {}) {
 const openCell = async (criterion: string) =>
   userEvent.click(await screen.findByRole('button', { name: new RegExp(criterion) }));
 
-const grade = (dialog: HTMLElement, judgeName: string) =>
-  within(dialog).getByLabelText(`Ocjena — ${judgeName}`);
+/** The 1-10 picker for one judge inside the dialog. */
+const picker = (dialog: HTMLElement, judgeName: string) =>
+  within(dialog).getByRole('radiogroup', { name: judgeName });
+
+/** An editable cell in the grid. */
+const cell = (judgeName: string, teamName: string, criterion: string) =>
+  screen.getByLabelText(`Ocjena — ${judgeName} — ${teamName} — ${criterion}`);
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
@@ -39,7 +44,7 @@ describe('ScoresTab', () => {
     expect(screen.getByRole('heading', { name: 'Kreativnost nastupa' })).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader', { name: 'Buba Corelli' })).toHaveLength(2);
     expect(screen.getAllByRole('columnheader', { name: 'Mate Rimac' })).toHaveLength(2);
-    expect(screen.getAllByText('0/2 uneseno')).toHaveLength(2);
+    expect(screen.getAllByText('0/2')).toHaveLength(2);
   });
 
   it('shows every individual mark, and a dash where none was entered', async () => {
@@ -51,12 +56,25 @@ describe('ScoresTab', () => {
     // Cells are: team | Buba | Mate | total | action. Asserting by position is
     // what proves each judge's mark sits in its OWN column rather than only
     // being rolled into the total.
+    // Each judge's mark sits in its own editable cell.
+    expect(cell('Buba Corelli', 'Leteći Bosanci', 'Kreativnost izrade vozila')).toHaveValue('9');
+    expect(cell('Mate Rimac', 'Leteći Bosanci', 'Kreativnost izrade vozila')).toHaveValue('');
     const cells = within(vehicleRow).getAllByRole('cell');
     expect(cells[0]).toHaveTextContent('Leteći Bosanci');
-    expect(cells[1]).toHaveTextContent('9');
-    expect(cells[2]).toHaveTextContent('—');
     expect(cells[3]).toHaveTextContent('9');
-    expect(cells[3]).toHaveTextContent('1/2 uneseno');
+    expect(cells[3]).toHaveTextContent('1/2');
+  });
+
+  it('lets a mark be typed straight into the grid', async () => {
+    const { api } = setup({ 'PUT /admin/scores/t1/vehicle': { status: 204 } });
+    await screen.findAllByText('Leteći Bosanci');
+    // The correction path: fix one number without opening anything.
+    await userEvent.type(cell('Buba Corelli', 'Leteći Bosanci', 'Kreativnost izrade vozila'), '7');
+    await userEvent.tab();
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      scores: [{ judgeId: 'j1', points: 7 }],
+    });
   });
 
   it('opens a modal for ONE criterion, listing every judge', async () => {
@@ -69,10 +87,10 @@ describe('ScoresTab', () => {
       within(dialog).getByText('Kreativnost izrade vozila — Leteći Bosanci'),
     ).toBeInTheDocument();
     expect(within(dialog).queryByText(/Kreativnost nastupa/)).not.toBeInTheDocument();
-    // One typed field per judge — no tap-a-button picker.
-    expect(grade(dialog, 'Buba Corelli')).toBeInTheDocument();
-    expect(grade(dialog, 'Mate Rimac')).toBeInTheDocument();
-    expect(within(dialog).queryByRole('radiogroup')).not.toBeInTheDocument();
+    // The dialog uses the 1-10 scale, one group per judge.
+    expect(picker(dialog, 'Buba Corelli')).toBeInTheDocument();
+    expect(picker(dialog, 'Mate Rimac')).toBeInTheDocument();
+    expect(within(picker(dialog, 'Buba Corelli')).getAllByRole('radio')).toHaveLength(10);
   });
 
   it('saves the whole panel in one write', async () => {
@@ -80,8 +98,8 @@ describe('ScoresTab', () => {
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
 
-    await userEvent.type(grade(dialog, 'Buba Corelli'), '9');
-    await userEvent.type(grade(dialog, 'Mate Rimac'), '7');
+    await userEvent.click(within(picker(dialog, 'Buba Corelli')).getByRole('radio', { name: '9' }));
+    await userEvent.click(within(picker(dialog, 'Mate Rimac')).getByRole('radio', { name: '7' }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
@@ -101,15 +119,20 @@ describe('ScoresTab', () => {
     });
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    expect(grade(dialog, 'Buba Corelli')).toHaveValue('8');
-    expect(grade(dialog, 'Mate Rimac')).toHaveValue('');
+    expect(
+      within(picker(dialog, 'Buba Corelli')).getByRole('radio', { name: '8' }),
+    ).toHaveAttribute('aria-checked', 'true');
+    expect(within(picker(dialog, 'Mate Rimac')).getByRole('radio', { name: '8' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
   });
 
   it('running total and progress update as you type', async () => {
     setup();
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    await userEvent.type(grade(dialog, 'Buba Corelli'), '9');
+    await userEvent.click(within(picker(dialog, 'Buba Corelli')).getByRole('radio', { name: '9' }));
     const footer = within(dialog).getByText('Ukupno').parentElement!;
     expect(footer).toHaveTextContent('9');
     expect(footer).toHaveTextContent('1/2 uneseno');
@@ -122,8 +145,8 @@ describe('ScoresTab', () => {
     });
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    // Clearing is now just emptying the field.
-    await userEvent.clear(grade(dialog, 'Buba Corelli'));
+    // Picking the selected mark again clears it back to blank.
+    await userEvent.click(within(picker(dialog, 'Buba Corelli')).getByRole('radio', { name: '8' }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));

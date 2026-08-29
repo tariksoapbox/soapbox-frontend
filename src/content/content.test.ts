@@ -31,6 +31,9 @@ describe('copy', () => {
   it('builds the judge-progress strings', () => {
     expect(standings.judgesOf(3, 5)).toBe('3/5 sudija');
     expect(admin.scores.of(3, 5)).toBe('3/5 uneseno');
+    expect(admin.scores.gradeIn('Buba', 'Lokumi', 'Vozilo')).toBe(
+      'Ocjena — Buba — Lokumi — Vozilo',
+    );
     expect(admin.scores.dialogTitle('Kreativnost nastupa', 'Lokumi')).toBe(
       'Kreativnost nastupa — Lokumi',
     );

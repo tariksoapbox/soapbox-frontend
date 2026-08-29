@@ -126,15 +126,28 @@ than two. `/rang-lista` is unlinked on purpose: it is the bare board for a proje
 
 ## Entering scores
 
-Nobody scores on a phone: judges mark on paper and an admin transcribes on a laptop. That decides
-the input. `GradeField` is a **typed number**, not a picker — 92 marks is a lot of tabbing, and
-typing `8` beats hunting for a button among ten. It uses `inputMode="numeric"` rather than
-`type="number"` so there are no spinners and the scroll wheel cannot silently change a mark
-someone is hovering over.
+Nobody scores on a phone: judges mark on paper and an admin transcribes on a laptop. There are
+two jobs, so two inputs:
+
+- **`GradeField`** — a typed number, in every grid cell. This is the _correction_ path: a card was
+  misread, fix that one number. It uses `inputMode="numeric"` rather than `type="number"`, so
+  there are no spinners and the scroll wheel cannot silently change a mark being hovered over. It
+  commits on blur and on Enter, never per keystroke — otherwise typing `10` would write a `1`
+  first.
+- **`ScorePicker`** — the 1–10 scale, ten buttons, inside the bulk dialog. This is the _entry_
+  path: a whole column set deliberately, where seeing the range beats typing. Picking the selected
+  mark again clears it.
 
 An empty field means **"not written down yet"** and is stored as a blank, never a zero — a missing
-card must not drag a total down. The grid shows every judge's mark in its own column, so the
-panel is readable at a glance; the dialog is for entering a whole column in one pass.
+card must not drag a total down.
+
+## Tables that outgrow the screen
+
+The score grid has a column per judge and must survive a panel growing past five. The team column
+is **pinned** (`position: sticky; left: 0`) with an opaque background, so judges scroll
+horizontally underneath it without the row losing its label. Judge headers are narrow and
+wrapping, so a long name costs height rather than pushing every other judge off screen, and row
+actions are icon-only. Any table that can grow a column per record should do the same.
 
 ## Iterating
 

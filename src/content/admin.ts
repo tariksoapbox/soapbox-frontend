@@ -60,16 +60,15 @@ export const admin = {
     enter: 'Unesi ocjene',
     edit: 'Izmijeni',
     pending: '—',
-    // The number field takes 1-10; anything else is refused before saving.
-    invalid: 'Ocjena mora biti cijeli broj između 1 i 10.',
-    grade: (judge: string) => `Ocjena — ${judge}`,
+    gradeIn: (judge: string, team: string, criterion: string) =>
+      `Ocjena — ${judge} — ${team} — ${criterion}`,
+    // Inline edits save when you leave the cell; say so once, above the grid.
+    inlineHelp:
+      'Ocjenu možete upisati direktno u tabelu — sprema se kada izađete iz polja ili pritisnete Enter. Dugme otvara cijeli kriterij za jednu ekipu.',
     of: (entered: number, expected: number) => `${entered}/${expected} uneseno`,
     dialogTitle: (criterion: string, team: string) => `${criterion} — ${team}`,
     dialogHelp:
       'Upišite ocjenu od 1 do 10 za svakog sudiju. Prazno polje znači da ocjena još nije unesena.',
-    clear: 'Obriši',
-    cleared: 'Ocjena je obrisana.',
-    saved: 'Ocjene su spremljene.',
     total: 'Ukupno',
   },
   users: {
