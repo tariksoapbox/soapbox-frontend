@@ -108,6 +108,17 @@ const stickyTeamColumn = {
   maxWidth: 220,
 } as const;
 
+/**
+ * A judge's column. The 52px field plus 14px either side leaves ~28px between
+ * adjacent inputs, so a row of marks reads as separate numbers rather than one
+ * run-together strip. Wide enough to breathe, narrow enough that a bigger panel
+ * still scrolls rather than breaks — the team column is pinned, so growing the
+ * panel costs scroll, not legibility.
+ */
+// An explicit measurement, not a spacing step: it is derived from the field
+// width, so it should not move when the spacing scale does.
+const judgeColumn = { width: 80, maxWidth: 80, px: '14px' } as const;
+
 function CriterionTable({
   criterion,
   teams,
@@ -137,9 +148,9 @@ function CriterionTable({
                 <TableCell
                   key={judge.id}
                   align="center"
-                  // Narrow and wrapping, so a long name costs height rather
-                  // than pushing every other judge off the screen.
-                  sx={{ width: 68, maxWidth: 68, whiteSpace: 'normal', lineHeight: 1.25 }}
+                  // Wrapping, so a long name costs height rather than pushing
+                  // every other judge off the screen.
+                  sx={{ ...judgeColumn, whiteSpace: 'normal', lineHeight: 1.25 }}
                 >
                   {judge.name}
                 </TableCell>
@@ -175,7 +186,7 @@ function CriterionTable({
                     {team.name}
                   </TableCell>
                   {judges.map((judge) => (
-                    <TableCell key={judge.id} align="center">
+                    <TableCell key={judge.id} align="center" sx={judgeColumn}>
                       <InlineGradeCell
                         // Remount when the STORED value changes — a bulk save
                         // or another tab — but not while typing, which does

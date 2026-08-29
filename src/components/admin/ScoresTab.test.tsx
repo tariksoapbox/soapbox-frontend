@@ -65,6 +65,17 @@ describe('ScoresTab', () => {
     expect(cells[3]).toHaveTextContent('1/2');
   });
 
+  it('spaces the judge columns so a row of marks reads as separate numbers', async () => {
+    setup();
+    await screen.findAllByText('Leteći Bosanci');
+    const header = screen.getAllByRole('columnheader', { name: 'Buba Corelli' })[0]!;
+    const { paddingLeft, paddingRight, width } = getComputedStyle(header);
+    // 52px field + 14px either side leaves ~28px between adjacent inputs.
+    expect(paddingLeft).toBe('14px');
+    expect(paddingRight).toBe('14px');
+    expect(width).toBe('80px');
+  });
+
   it('lets a mark be typed straight into the grid', async () => {
     const { api } = setup({ 'PUT /admin/scores/t1/vehicle': { status: 204 } });
     await screen.findAllByText('Leteći Bosanci');
