@@ -24,30 +24,39 @@ function setup(routes: Routes = {}) {
 const openCell = async (criterion: string) =>
   userEvent.click(await screen.findByRole('button', { name: new RegExp(criterion) }));
 
+const grade = (dialog: HTMLElement, judgeName: string) =>
+  within(dialog).getByLabelText(`Ocjena — ${judgeName}`);
+
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
 
 describe('ScoresTab', () => {
-  it('shows a cell per team and criterion, with nothing entered yet', async () => {
+  it('shows one table per criterion, with a column per judge', async () => {
     setup();
-    expect(await screen.findByText('Leteći Bosanci')).toBeInTheDocument();
-    expect(
-      screen.getByRole('columnheader', { name: 'Kreativnost izrade vozila' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Kreativnost nastupa' })).toBeInTheDocument();
+    await screen.findAllByText('Leteći Bosanci');
+    // Every judge is a column, so the whole panel is readable at a glance.
+    expect(screen.getByRole('heading', { name: 'Kreativnost izrade vozila' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kreativnost nastupa' })).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader', { name: 'Buba Corelli' })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Mate Rimac' })).toHaveLength(2);
     expect(screen.getAllByText('0/2 uneseno')).toHaveLength(2);
   });
 
-  it('shows the running total and progress once marks exist', async () => {
+  it('shows every individual mark, and a dash where none was entered', async () => {
     setup({
-      'GET /admin/scores': {
-        judges: panel,
-        scores: [score({ judgeId: 'j1', points: 9 })],
-      },
+      'GET /admin/scores': { judges: panel, scores: [score({ judgeId: 'j1', points: 9 })] },
     });
-    await screen.findByText('Leteći Bosanci');
-    expect(screen.getByText('9')).toBeInTheDocument();
-    expect(screen.getByText('1/2 uneseno')).toBeInTheDocument();
+    await screen.findAllByText('Leteći Bosanci');
+    const vehicleRow = screen.getAllByRole('row', { name: /Leteći Bosanci/ })[0]!;
+    // Cells are: team | Buba | Mate | total | action. Asserting by position is
+    // what proves each judge's mark sits in its OWN column rather than only
+    // being rolled into the total.
+    const cells = within(vehicleRow).getAllByRole('cell');
+    expect(cells[0]).toHaveTextContent('Leteći Bosanci');
+    expect(cells[1]).toHaveTextContent('9');
+    expect(cells[2]).toHaveTextContent('—');
+    expect(cells[3]).toHaveTextContent('9');
+    expect(cells[3]).toHaveTextContent('1/2 uneseno');
   });
 
   it('opens a modal for ONE criterion, listing every judge', async () => {
@@ -60,10 +69,10 @@ describe('ScoresTab', () => {
       within(dialog).getByText('Kreativnost izrade vozila — Leteći Bosanci'),
     ).toBeInTheDocument();
     expect(within(dialog).queryByText(/Kreativnost nastupa/)).not.toBeInTheDocument();
-    // One 1–10 scale per judge.
-    expect(within(dialog).getByText('Buba Corelli')).toBeInTheDocument();
-    expect(within(dialog).getByText('Mate Rimac')).toBeInTheDocument();
-    expect(within(dialog).getAllByRole('radiogroup')).toHaveLength(2);
+    // One typed field per judge — no tap-a-button picker.
+    expect(grade(dialog, 'Buba Corelli')).toBeInTheDocument();
+    expect(grade(dialog, 'Mate Rimac')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('radiogroup')).not.toBeInTheDocument();
   });
 
   it('saves the whole panel in one write', async () => {
@@ -71,9 +80,8 @@ describe('ScoresTab', () => {
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
 
-    const [buba, mate] = within(dialog).getAllByRole('radiogroup');
-    await userEvent.click(within(buba!).getByRole('radio', { name: '9' }));
-    await userEvent.click(within(mate!).getByRole('radio', { name: '7' }));
+    await userEvent.type(grade(dialog, 'Buba Corelli'), '9');
+    await userEvent.type(grade(dialog, 'Mate Rimac'), '7');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
@@ -93,17 +101,15 @@ describe('ScoresTab', () => {
     });
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    const [buba] = within(dialog).getAllByRole('radiogroup');
-    expect(within(buba!).getByRole('radio', { name: '8' })).toHaveAttribute('aria-checked', 'true');
+    expect(grade(dialog, 'Buba Corelli')).toHaveValue('8');
+    expect(grade(dialog, 'Mate Rimac')).toHaveValue('');
   });
 
   it('running total and progress update as you type', async () => {
     setup();
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    const [buba] = within(dialog).getAllByRole('radiogroup');
-    await userEvent.click(within(buba!).getByRole('radio', { name: '9' }));
-    // Scoped to the footer: "9" is also the label of the key that was tapped.
+    await userEvent.type(grade(dialog, 'Buba Corelli'), '9');
     const footer = within(dialog).getByText('Ukupno').parentElement!;
     expect(footer).toHaveTextContent('9');
     expect(footer).toHaveTextContent('1/2 uneseno');
@@ -116,7 +122,8 @@ describe('ScoresTab', () => {
     });
     await openCell('Kreativnost izrade vozila — Leteći Bosanci');
     const dialog = await screen.findByRole('dialog');
-    await userEvent.click(within(dialog).getAllByRole('button', { name: 'Obriši' })[0]!);
+    // Clearing is now just emptying the field.
+    await userEvent.clear(grade(dialog, 'Buba Corelli'));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));

@@ -124,16 +124,17 @@ Each role's screens are MUI `Tabs` at the top of its own page (`JudgeConsole`, `
 so the switch sits next to the content it switches and the app has one navigation idea rather
 than two. `/rang-lista` is unlinked on purpose: it is the bare board for a projector.
 
-## Touch and the ballot
+## Entering scores
 
-`ScorePicker` is the screen a judge actually uses: outdoors, standing, one-handed. Its keys are
-**52px tall**, comfortably over the 44px minimum, laid out 5 × 2 on a phone and 10 × 1 from
-600px. `WebkitTextSizeAdjust: '100%'` on `html` stops iOS Safari inflating the type in landscape
-and breaking that grid.
+Nobody scores on a phone: judges mark on paper and an admin transcribes on a laptop. That decides
+the input. `GradeField` is a **typed number**, not a picker — 92 marks is a lot of tabbing, and
+typing `8` beats hunting for a button among ten. It uses `inputMode="numeric"` rather than
+`type="number"` so there are no spinners and the scroll wheel cannot silently change a mark
+someone is hovering over.
 
-Choosing a score does **not** submit it. Submission is final (the API refuses a second vote), so
-"choose" and "send" are two taps — but not a dialog, because a judge casts twenty-odd votes in
-an evening and a modal on each one would be worse than the mistake it prevents.
+An empty field means **"not written down yet"** and is stored as a blank, never a zero — a missing
+card must not drag a total down. The grid shows every judge's mark in its own column, so the
+panel is readable at a glance; the dialog is for entering a whole column in one pass.
 
 ## Iterating
 
