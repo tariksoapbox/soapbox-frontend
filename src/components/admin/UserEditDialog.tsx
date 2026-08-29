@@ -18,8 +18,8 @@ import { RHFTextField } from '../RHFTextField';
 import { PasswordField } from '../PasswordField';
 import { FormAlert } from '../FormAlert';
 import { admin as copy } from '@/content/admin';
-import { common, roles } from '@/content/common';
-import { ROLES, type AdminUser } from '@/schemas/contracts';
+import { common } from '@/content/common';
+import type { AdminUser } from '@/schemas/contracts';
 import { userEditFormSchema, type UserEditForm } from '@/schemas/forms';
 import { useUpdateUser } from '@/lib/queries/admin';
 import type { UpdateUserInput } from '@/lib/api/admin';
@@ -38,7 +38,7 @@ export function UserEditDialog({ user, onClose }: { user: AdminUser | null; onCl
   const update = useUpdateUser();
   const { control, handleSubmit, reset } = useForm<UserEditForm>({
     resolver: zodResolver(userEditFormSchema),
-    defaultValues: { displayName: '', username: '', password: '', role: 'referee' },
+    defaultValues: { displayName: '', username: '', password: '' },
   });
 
   // Refill whenever a different row is opened; the password always starts blank,
@@ -52,7 +52,6 @@ export function UserEditDialog({ user, onClose }: { user: AdminUser | null; onCl
       displayName: user.displayName,
       username: user.username,
       password: '',
-      role: user.role,
     });
   }, [user, reset]);
 
@@ -67,7 +66,6 @@ export function UserEditDialog({ user, onClose }: { user: AdminUser | null; onCl
     const patch: UpdateUserInput = {};
     if (values.displayName !== user.displayName) patch.displayName = values.displayName;
     if (values.username !== user.username) patch.username = values.username;
-    if (values.role !== user.role) patch.role = values.role;
     if (values.password !== '') patch.password = values.password;
 
     if (Object.keys(patch).length === 0) {
@@ -108,13 +106,6 @@ export function UserEditDialog({ user, onClose }: { user: AdminUser | null; onCl
               autoCorrect="off"
               spellCheck={false}
             />
-            <RHFTextField control={control} name="role" label={copy.users.role} select>
-              {ROLES.map((role) => (
-                <MenuItem key={role} value={role}>
-                  {roles[role]}
-                </MenuItem>
-              ))}
-            </RHFTextField>
             <PasswordField
               control={control}
               name="password"

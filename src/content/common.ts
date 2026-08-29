@@ -21,9 +21,13 @@ export const common = {
   signOut: 'Odjava',
   genericError: 'Došlo je do greške. Pokušajte ponovo.',
   offline: 'Nema veze sa serverom.',
+  // Render's free instance sleeps after ~15 min of quiet; the first request
+  // wakes it and can wait 20-50s. Say so, or the app looks frozen.
+  waking: 'Server se budi nakon neaktivnosti — ovo može potrajati do minute…',
   showPassword: 'Prikaži lozinku',
   hidePassword: 'Sakrij lozinku',
   none: '—',
+  administrator: 'Administrator',
 } as const;
 
 export const criteria = {
@@ -37,9 +41,4 @@ export const criteriaShort = {
   vehicle: 'Vozilo',
   performance: 'Nastup',
   time: 'Vrijeme',
-} as const;
-
-export const roles = {
-  admin: 'Administrator',
-  referee: 'Sudija',
 } as const;

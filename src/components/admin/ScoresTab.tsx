@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
   Alert,
   Box,
-  IconButton,
+  Button,
   Paper,
   Stack,
   Table,
@@ -13,183 +13,156 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import BackspaceOutlinedIcon from '@mui/icons-material/BackspaceOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { QueryState } from '../QueryState';
-import { ConfirmDialog } from '../ConfirmDialog';
+import { CriterionScoreDialog, type CriterionTarget } from './CriterionScoreDialog';
 import { admin as copy } from '@/content/admin';
-import { criteria, criteriaShort } from '@/content/common';
-import { useClearScore, useScoreMatrix, useTeams } from '@/lib/queries/admin';
-import { CRITERIA, type Criterion, type ScoreEntry } from '@/schemas/contracts';
-
-interface PendingClear {
-  score: ScoreEntry;
-  judgeName: string;
-  teamName: string;
-}
+import { criteria } from '@/content/common';
+import { useJudges, useScoreMatrix, useTeams } from '@/lib/queries/admin';
+import { CRITERIA, type Criterion, type Team } from '@/schemas/contracts';
 
 /**
- * Judge × team, one grid per criterion.
+ * Where the scores get entered: one row per team, one column per criterion.
  *
- * This exists to answer one question fast: a column is stuck at 4/5 — who is
- * missing? A blank cell names the judge and the team, and every filled cell can
- * be cleared so a mis-tap can be recast. It is the only place a judge's
- * individual score is ever shown; the public board only carries totals.
+ * Each cell is a whole criterion for that team — its running total, how many
+ * judges have been entered, and the way in. Opening a cell is opening the stack
+ * of paper cards for that run, which is the unit the admin actually works in.
  */
 export function ScoresTab() {
-  const matrix = useScoreMatrix();
   const teams = useTeams();
-  const clear = useClearScore();
-  const [pending, setPending] = useState<PendingClear | null>(null);
+  const judges = useJudges();
+  const matrix = useScoreMatrix();
+  const [target, setTarget] = useState<CriterionTarget | null>(null);
 
-  const judges = matrix.data?.judges.filter((j) => j.isActive) ?? [];
-  const byCell = new Map(
-    (matrix.data?.scores ?? []).map((s) => [`${s.teamId}:${s.judgeId}:${s.criterion}`, s]),
-  );
+  const activeJudges = (judges.data ?? []).filter((j) => j.isActive);
+
+  /** The marks recorded for one team and criterion, keyed by judge. */
+  const marksFor = (teamId: string, criterion: Criterion) =>
+    new Map(
+      (matrix.data?.scores ?? [])
+        .filter((s) => s.teamId === teamId && s.criterion === criterion)
+        .map((s) => [s.judgeId, s.points]),
+    );
 
   return (
     <Stack spacing={3}>
-      <Typography sx={{ color: 'text.secondary' }}>{copy.scores.subtitle}</Typography>
+      <Typography sx={{ color: 'text.secondary', maxWidth: '68ch' }}>
+        {copy.scores.subtitle}
+      </Typography>
 
       <QueryState
-        isPending={matrix.isPending || teams.isPending}
-        error={matrix.error ?? teams.error}
+        isPending={teams.isPending || judges.isPending || matrix.isPending}
+        error={teams.error ?? judges.error ?? matrix.error}
         isEmpty={teams.data?.length === 0}
         emptyMessage={copy.scores.empty}
         onRetry={() => void matrix.refetch()}
       >
-        {judges.length === 0 ? (
+        {activeJudges.length === 0 ? (
           <Alert severity="warning">{copy.scores.noJudges}</Alert>
         ) : (
-          CRITERIA.map((criterion) => (
-            <Box key={criterion}>
-              <Typography variant="h3" component="h2" sx={{ mb: 1.5 }}>
-                {criteria[criterion]}
-              </Typography>
-              <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ minWidth: 160 }}>{criteriaShort[criterion]}</TableCell>
-                      {judges.map((judge) => (
-                        <TableCell key={judge.id} align="center">
-                          {judge.displayName}
-                        </TableCell>
-                      ))}
-                      <TableCell align="right">{copy.scores.title}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {teams.data?.map((team) => {
-                      const cells = judges.map((judge) => ({
-                        judge,
-                        score: byCell.get(`${team.id}:${judge.id}:${criterion}`),
-                      }));
-                      const total = cells.reduce((sum, c) => sum + (c.score?.points ?? 0), 0);
-                      return (
-                        <TableRow key={team.id} sx={{ '&:hover': { bgcolor: 'brand.rowHover' } }}>
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {team.bibNumber !== null && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  color: 'text.secondary',
-                                  mr: 1,
-                                  fontVariantNumeric: 'tabular-nums',
-                                }}
-                              >
-                                {team.bibNumber}
-                              </Box>
-                            )}
-                            {team.name}
-                          </TableCell>
-                          {cells.map(({ judge, score }) => (
-                            <TableCell key={judge.id} align="center" sx={{ px: 0.5 }}>
-                              {score ? (
-                                <ScoreChip
-                                  points={score.points}
-                                  onClear={() =>
-                                    setPending({
-                                      score,
-                                      judgeName: judge.displayName,
-                                      teamName: team.name,
-                                    })
-                                  }
-                                  label={`${copy.scores.clear} — ${judge.displayName}, ${team.name}`}
-                                />
-                              ) : (
-                                <Typography variant="caption" sx={{ color: 'brand.pending' }}>
-                                  {copy.scores.pending}
-                                </Typography>
-                              )}
-                            </TableCell>
-                          ))}
-                          <TableCell align="right">
-                            <Typography variant="numeric" sx={{ fontSize: 16 }}>
-                              {total}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          ))
+          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ minWidth: 180 }}>{copy.teams.name}</TableCell>
+                  {CRITERIA.map((criterion) => (
+                    <TableCell key={criterion} align="center" sx={{ minWidth: 200 }}>
+                      {criteria[criterion]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {teams.data?.map((team) => (
+                  <TableRow key={team.id} sx={{ '&:hover': { bgcolor: 'brand.rowHover' } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {team.bibNumber !== null && (
+                        <Box
+                          component="span"
+                          sx={{
+                            color: 'text.secondary',
+                            mr: 1,
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {team.bibNumber}
+                        </Box>
+                      )}
+                      {team.name}
+                    </TableCell>
+                    {CRITERIA.map((criterion) => (
+                      <TableCell key={criterion} align="center">
+                        <CriterionCell
+                          marks={marksFor(team.id, criterion)}
+                          expected={activeJudges.length}
+                          label={`${criteria[criterion]} — ${team.name}`}
+                          onOpen={() => setTarget({ team, criterion })}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </QueryState>
 
-      <ConfirmDialog
-        open={pending !== null}
-        title={copy.scores.confirmClearTitle}
-        description={
-          pending
-            ? copy.scores.confirmClear(pending.judgeName, pending.teamName, pending.score.points)
-            : ''
-        }
-        confirmLabel={copy.scores.clear}
-        busy={clear.isPending}
-        onClose={() => setPending(null)}
-        onConfirm={() =>
-          pending && clear.mutate(pending.score.id, { onSettled: () => setPending(null) })
-        }
+      <CriterionScoreDialog
+        target={target}
+        judges={activeJudges}
+        current={target ? marksFor(target.team.id, target.criterion) : new Map()}
+        onClose={() => setTarget(null)}
       />
     </Stack>
   );
 }
 
-/** A cast score, with the clear action tucked behind a hover/focus reveal. */
-function ScoreChip({
-  points,
-  onClear,
+/** One criterion for one team: the total so far, and the way in. */
+function CriterionCell({
+  marks,
+  expected,
   label,
+  onOpen,
 }: {
-  points: number;
-  onClear: () => void;
+  marks: Map<string, number>;
+  expected: number;
   label: string;
+  onOpen: () => void;
 }) {
+  const entered = marks.size;
+  const total = [...marks.values()].reduce((sum, p) => sum + p, 0);
+  const complete = expected > 0 && entered >= expected;
+
   return (
-    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Typography variant="numeric" sx={{ fontSize: 15 }}>
-        {points}
+    <Stack spacing={0.5} sx={{ alignItems: 'center' }}>
+      <Button
+        onClick={onOpen}
+        aria-label={`${entered === 0 ? copy.scores.enter : copy.scores.edit} — ${label}`}
+        startIcon={entered > 0 ? <EditOutlinedIcon /> : undefined}
+        variant={entered === 0 ? 'outlined' : 'text'}
+        color={entered === 0 ? 'primary' : 'secondary'}
+        sx={{ minWidth: 132 }}
+      >
+        {entered === 0 ? (
+          copy.scores.enter
+        ) : (
+          <Typography component="span" variant="numeric" sx={{ fontSize: 18 }}>
+            {total}
+          </Typography>
+        )}
+      </Button>
+      <Typography
+        variant="caption"
+        sx={{
+          color: complete ? 'success.main' : 'brand.pending',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {copy.scores.of(entered, expected)}
       </Typography>
-      <Tooltip title={label}>
-        <IconButton
-          size="small"
-          aria-label={label}
-          onClick={onClear}
-          sx={{
-            color: 'text.secondary',
-            opacity: { xs: 1, md: 0 },
-            '&:focus-visible, .MuiTableRow-root:hover &': { opacity: 1 },
-          }}
-        >
-          <BackspaceOutlinedIcon sx={{ fontSize: 15 }} />
-        </IconButton>
-      </Tooltip>
     </Stack>
   );
 }

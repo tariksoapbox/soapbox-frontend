@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  clearScore,
   createTeam,
   createUser,
   deleteTeam,
@@ -8,6 +7,7 @@ import {
   getScoreMatrix,
   listTeams,
   listUsers,
+  saveCriterionScores,
   setRunTime,
   setUserActive,
   updateTeam,
@@ -39,7 +39,6 @@ describe('admin client', () => {
     ['reads the matrix', () => getScoreMatrix(), '/api/admin/scores', undefined],
     ['deletes a user', () => deleteUser('u1'), '/api/admin/users/u1', 'DELETE'],
     ['deletes a team', () => deleteTeam('t1'), '/api/admin/teams/t1', 'DELETE'],
-    ['clears a score', () => clearScore('s1'), '/api/admin/scores/s1', 'DELETE'],
   ])('%s', async (_label, run, url, method) => {
     await run();
     const [calledUrl, init] = call();
@@ -48,7 +47,7 @@ describe('admin client', () => {
   });
 
   it('creates a user', async () => {
-    await createUser({ username: 'sudija2', password: 'x', displayName: 'S2', role: 'referee' });
+    await createUser({ username: 'admin2', password: 'x', displayName: 'Drugi' });
     const [url, init] = call();
     expect(url).toBe('/api/admin/users');
     expect(init.method).toBe('POST');
@@ -72,6 +71,20 @@ describe('admin client', () => {
     fetchMock.mockClear();
     await updateTeam('t1', { name: 'Novo' });
     expect(call()[0]).toBe('/api/admin/teams/t1');
+  });
+
+  it('saves a whole criterion in one PUT', async () => {
+    await saveCriterionScores('t1', 'vehicle', [
+      { judgeId: 'j1', points: 9 },
+      { judgeId: 'j2', points: null },
+    ]);
+    const [url, init] = call();
+    expect(url).toBe('/api/admin/scores/t1/vehicle');
+    expect(init.method).toBe('PUT');
+    // `null` clears a mark back to blank rather than setting a zero.
+    expect(init.body).toBe(
+      '{"scores":[{"judgeId":"j1","points":9},{"judgeId":"j2","points":null}]}',
+    );
   });
 
   it('PUTs the run time, and sends null to clear it', async () => {

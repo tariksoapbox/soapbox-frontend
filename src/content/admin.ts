@@ -4,7 +4,8 @@ export const admin = {
     standings: 'Rang lista',
     teams: 'Ekipe',
     scores: 'Ocjene',
-    users: 'Korisnici',
+    judges: 'Sudije',
+    users: 'Administratori',
   },
   teams: {
     title: 'Ekipe i prolazna vremena',
@@ -29,29 +30,54 @@ export const admin = {
     confirmDelete: (name: string) =>
       `Brisanjem ekipe "${name}" trajno se brišu i sve ocjene koje su sudije poslale za nju.`,
   },
+  judges: {
+    title: 'Sudije',
+    subtitle:
+      'Sudije se ne prijavljuju u aplikaciju — ocjenjuju na papiru, a Vi unosite ocjene. Zato sudija ima samo ime.',
+    add: 'Dodaj sudiju',
+    name: 'Ime i prezime sudije',
+    active: 'Aktivan',
+    inactive: 'Neaktivan',
+    activate: 'Vrati u žiri',
+    deactivate: 'Ukloni iz žirija',
+    empty: 'Još nema sudija. Dodajte ih prije prve vožnje.',
+    // The active count is the denominator of every "3 / 5 sudija".
+    countNotice:
+      'Broj aktivnih sudija određuje kada je kriterij kompletan. Neaktivan sudija se ne broji, a njegove ocjene se ne računaju.',
+    editSafeNotice:
+      'Preimenovanje sudije ne utiče na već unesene ocjene. Brisanje sudije briše i sve njegove ocjene.',
+    confirmDeleteTitle: 'Obrisati sudiju?',
+    confirmDelete: (name: string) =>
+      `Brisanjem sudije "${name}" trajno se brišu i sve ocjene koje su za njega unesene. Ako ga samo ne želite više u žiriju, uklonite ga iz žirija.`,
+  },
   scores: {
-    title: 'Poslane ocjene',
-    subtitle: 'Ko je poslao ocjenu, a ko još nije. Ovdje ispravljate greške sudija.',
-    pending: 'Čeka',
-    noJudges: 'Nema aktivnih sudija. Kreirajte ih u kartici "Korisnici".',
-    empty: 'Još nema ekipa.',
-    clear: 'Poništi ocjenu',
-    cleared: 'Ocjena je poništena. Sudija je sada može poslati ponovo.',
-    confirmClearTitle: 'Poništiti ocjenu?',
-    confirmClear: (judge: string, team: string, points: number) =>
-      `Ocjena ${points}, koju je sudija ${judge} poslao za ekipu "${team}", biće obrisana. Sudija će je moći poslati ponovo.`,
+    title: 'Unos ocjena',
+    subtitle:
+      'Otvorite kriterij za ekipu i unesite ocjenu svakog sudije. Ocjene možete mijenjati koliko god puta treba.',
+    noJudges: 'Nema aktivnih sudija. Dodajte ih u kartici "Sudije".',
+    empty: 'Još nema ekipa. Dodajte ih u kartici "Ekipe".',
+    enter: 'Unesi ocjene',
+    edit: 'Izmijeni ocjene',
+    pending: 'Nije uneseno',
+    of: (entered: number, expected: number) => `${entered}/${expected} uneseno`,
+    dialogTitle: (criterion: string, team: string) => `${criterion} — ${team}`,
+    dialogHelp: 'Unesite ocjenu (1–10) za svakog sudiju. Prazno znači da ocjena još nije unesena.',
+    clear: 'Obriši',
+    cleared: 'Ocjena je obrisana.',
+    saved: 'Ocjene su spremljene.',
+    total: 'Ukupno',
   },
   users: {
-    title: 'Korisnici',
-    subtitle: 'Kreirajte sudije i administratore. Sudije se ne mogu registrovati same.',
-    add: 'Novi korisnik',
-    addTitle: 'Novi korisnik',
+    title: 'Administratori',
+    subtitle:
+      'Računi za prijavu u aplikaciju. Samo administratori se prijavljuju — sudije nemaju račun.',
+    add: 'Novi administrator',
+    addTitle: 'Novi administrator',
     displayName: 'Ime i prezime',
     username: 'Korisničko ime',
     usernameHelp: 'Mala slova, brojevi te . _ - — bez razmaka.',
     password: 'Lozinka',
     passwordHelp: 'Najmanje 8 znakova.',
-    role: 'Uloga',
     active: 'Aktivan',
     inactive: 'Deaktiviran',
     created: (name: string) => `Korisnik "${name}" je kreiran.`,
@@ -76,8 +102,7 @@ export const admin = {
     confirmDelete: (name: string) =>
       `Brisanjem korisnika "${name}" trajno se brišu i sve ocjene koje je poslao.`,
     you: 'Vi',
-    // Deactivating a judge changes the denominator of every "x / y sudija".
-    judgeCountNotice:
-      'Broj aktivnih sudija određuje kada je kriterij kompletan. Deaktivirani sudija se ne broji, a njegove ocjene se ne računaju.',
+    lastAdminNotice:
+      'Mora postojati barem jedan aktivan administrator — inače se niko ne može prijaviti.',
   },
 } as const;

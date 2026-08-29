@@ -24,6 +24,9 @@ All UI must follow **`STYLING_GUIDE.md`** and build from the MUI theme (`src/the
   `FormAlert`, `PageShell`, `Brand`, `AppHeader`). Don't re-style MUI per component.
 - **No navigation in the header.** Each role switches screens with `Tabs` inside its own page
   (`JudgeConsole`, `AdminConsole`). Do not add nav links back to `AppHeader`.
+- **Judges do not sign in.** There is no judge-facing screen and no role anywhere in the app —
+  everyone who signs in is an administrator. Scores are entered by the admin, one criterion at a
+  time, via `CriterionScoreDialog`.
 - **Editing a user is safe; deleting one is not.** Scores reference the user's UUID, so an edit
   keeps their votes while a delete cascades them away. `UserEditDialog` sends only the fields
   that actually changed, and the password is omitted unless one was typed.

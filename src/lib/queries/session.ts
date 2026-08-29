@@ -41,9 +41,8 @@ export function useLogout() {
   const router = useRouter();
   return useMutation({
     mutationFn: logout,
-    // Clear the whole cache, not just the session: a judge's ballot and the
-    // board must not still be sitting in memory for whoever signs in next on a
-    // shared phone.
+    // Clear the whole cache, not just the session: nothing an admin was looking
+    // at should still be in memory for whoever signs in next on a shared laptop.
     onSettled: () => {
       queryClient.clear();
       router.replace('/prijava');

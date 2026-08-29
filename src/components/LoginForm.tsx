@@ -12,7 +12,7 @@ import { FormAlert } from './FormAlert';
 import { auth } from '@/content/auth';
 import { loginFormSchema, type LoginForm as LoginValues } from '@/schemas/forms';
 import { useLogin, useSession } from '@/lib/queries/session';
-import { homeFor } from '@/lib/routes';
+import { routes } from '@/lib/routes';
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export function LoginForm() {
 
   // Covers both "just signed in" and "came back to /prijava with a live session".
   useEffect(() => {
-    if (user) router.replace(homeFor(user.role));
+    if (user) router.replace(routes.admin);
   }, [user, router]);
 
   return (

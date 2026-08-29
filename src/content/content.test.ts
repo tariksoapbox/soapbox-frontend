@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { common, criteria, criteriaShort, roles } from './common';
+import { common, criteria, criteriaShort } from './common';
 import { auth } from './auth';
-import { judge } from './judge';
 import { standings } from './standings';
 import { admin } from './admin';
-import { CRITERIA, ROLES } from '@/schemas/contracts';
+import { CRITERIA } from '@/schemas/contracts';
 
 describe('copy', () => {
   it('names every criterion the API can send, long and short', () => {
@@ -15,8 +14,8 @@ describe('copy', () => {
     expect(criteria.time).toBe('Prolazno vrijeme');
   });
 
-  it('names every role', () => {
-    for (const role of ROLES) expect(roles[role]).toBeTruthy();
+  it('has no roles left — everyone who signs in is an administrator', () => {
+    expect(common.administrator).toBe('Administrator');
   });
 
   it('spells out that sessions do not survive the browser', () => {
@@ -24,16 +23,17 @@ describe('copy', () => {
     expect(auth.noSignUp).toMatch(/administrator/i);
   });
 
-  it('agrees with itself on the remaining-count plural', () => {
-    expect(judge.remaining(1)).toBe('Preostala 1 ocjena');
-    expect(judge.remaining(4)).toBe('Preostalo ocjena: 4');
+  it('says plainly that judges do not sign in', () => {
+    expect(admin.judges.subtitle).toMatch(/ne prijavljuju/);
+    expect(admin.users.subtitle).toMatch(/sudije nemaju račun/i);
   });
 
-  it('builds the judge-progress and submission strings', () => {
+  it('builds the judge-progress strings', () => {
     expect(standings.judgesOf(3, 5)).toBe('3/5 sudija');
-    expect(judge.submit(8)).toBe('Pošalji ocjenu 8');
-    expect(judge.submittedAt('10:04:05')).toContain('10:04:05');
-    expect(judge.bib(7)).toBe('Startni broj 7');
+    expect(admin.scores.of(3, 5)).toBe('3/5 uneseno');
+    expect(admin.scores.dialogTitle('Kreativnost nastupa', 'Lokumi')).toBe(
+      'Kreativnost nastupa — Lokumi',
+    );
     expect(standings.updatedAt('10:04:05')).toContain('10:04:05');
   });
 
@@ -44,8 +44,8 @@ describe('copy', () => {
 
   it('warns before every destructive admin action', () => {
     expect(admin.teams.confirmDelete('Ekipa')).toMatch(/ocjene/i);
-    expect(admin.users.confirmDelete('Sudija')).toMatch(/ocjene/i);
-    expect(admin.scores.confirmClear('Sudija 1', 'Ekipa', 9)).toMatch(/ponovo/i);
+    expect(admin.users.confirmDelete('Admin')).toMatch(/ocjene/i);
+    expect(admin.judges.confirmDelete('Sudija')).toMatch(/ocjene/i);
     expect(admin.teams.created('Ekipa')).toContain('Ekipa');
     expect(admin.teams.timeSaved('Ekipa')).toContain('Ekipa');
     expect(admin.teams.timeCleared('Ekipa')).toContain('Ekipa');
@@ -53,13 +53,13 @@ describe('copy', () => {
   });
 
   it('has a label for every admin tab', () => {
-    for (const key of ['standings', 'teams', 'scores', 'users'] as const) {
+    for (const key of ['standings', 'teams', 'scores', 'judges', 'users'] as const) {
       expect(admin.tabs[key]).toBeTruthy();
     }
   });
 
   it('keeps the app name free of any Red Bull mark', () => {
-    const all = JSON.stringify([common, auth, judge, standings, admin]).toLowerCase();
+    const all = JSON.stringify([common, auth, standings, admin]).toLowerCase();
     expect(all).not.toContain('red bull');
     expect(all).not.toContain('redbull');
   });

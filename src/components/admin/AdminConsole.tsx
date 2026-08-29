@@ -5,10 +5,11 @@ import { Box, Tab, Tabs } from '@mui/material';
 import { StandingsBoard } from '../standings/StandingsBoard';
 import { TeamsTab } from './TeamsTab';
 import { ScoresTab } from './ScoresTab';
+import { JudgesTab } from './JudgesTab';
 import { UsersTab } from './UsersTab';
 import { admin as copy } from '@/content/admin';
 
-const TABS = ['standings', 'teams', 'scores', 'users'] as const;
+const TABS = ['standings', 'teams', 'scores', 'judges', 'users'] as const;
 type TabKey = (typeof TABS)[number];
 
 /**
@@ -37,6 +38,7 @@ export function AdminConsole() {
       {tab === 'standings' && <StandingsBoard />}
       {tab === 'teams' && <TeamsTab />}
       {tab === 'scores' && <ScoresTab />}
+      {tab === 'judges' && <JudgesTab />}
       {tab === 'users' && <UsersTab />}
     </Box>
   );

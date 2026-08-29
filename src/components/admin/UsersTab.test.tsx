@@ -6,7 +6,7 @@ import { UsersTab } from './UsersTab';
 import { user } from './fixtures';
 import { mockApi, type Routes } from '@/lib/queries/test-server';
 
-const me = user({ id: 'a1', username: 'admin', displayName: 'Glavni Admin', role: 'admin' });
+const me = user({ id: 'a1', username: 'admin', displayName: 'Glavni Admin' });
 
 function setup(routes: Routes) {
   const api = mockApi({ 'GET /auth/session': { user: me }, ...routes });
@@ -19,44 +19,47 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
 
 describe('UsersTab', () => {
-  it('lists accounts with their role and whether they are active', async () => {
-    setup({ 'GET /admin/users': { users: [me, user()] } });
-    await screen.findByText('Sudija 1');
-    expect(within(row('Sudija 1')).getByText('Sudija')).toBeInTheDocument();
-    expect(within(row('Sudija 1')).getByText('Aktivan')).toBeInTheDocument();
-    expect(within(row('Glavni Admin')).getByText('Administrator')).toBeInTheDocument();
+  it('lists accounts and whether they are active', async () => {
+    setup({
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
+    });
+    await screen.findByText('Drugi Admin');
+    expect(within(row('Drugi Admin')).getByText('Aktivan')).toBeInTheDocument();
   });
 
-  it('explains that the judge count drives when a criterion is complete', async () => {
+  it('warns that the console must keep one active administrator', async () => {
     setup({ 'GET /admin/users': { users: [me] } });
-    expect(await screen.findByText(/Broj aktivnih sudija/)).toBeInTheDocument();
+    expect(await screen.findByText(/barem jedan aktivan administrator/)).toBeInTheDocument();
   });
 
-  it('creates a judge', async () => {
+  it('creates another administrator', async () => {
     const { api } = setup({
       'GET /admin/users': { users: [me] },
-      'POST /admin/users': { user: user() },
+      'POST /admin/users': {
+        user: user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' }),
+      },
     });
-    await userEvent.click(screen.getByRole('button', { name: 'Novi korisnik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Novi administrator' }));
     const dialog = await screen.findByRole('dialog');
-    await userEvent.type(within(dialog).getByLabelText('Ime i prezime'), 'Sudija 2');
-    await userEvent.type(within(dialog).getByLabelText('Korisničko ime'), 'Sudija2');
-    await userEvent.type(within(dialog).getByLabelText('Lozinka'), 'Sudija2026#6');
+    await userEvent.type(within(dialog).getByLabelText('Ime i prezime'), 'Treći Admin');
+    await userEvent.type(within(dialog).getByLabelText('Korisničko ime'), 'Treci');
+    await userEvent.type(within(dialog).getByLabelText('Lozinka'), 'Tarik123!');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'POST')).toBe(true));
     expect(api.calls.find((c) => c.method === 'POST')!.body).toEqual({
-      displayName: 'Sudija 2',
+      displayName: 'Treći Admin',
       // Normalised, so "Sudija2" and "sudija2" can never become two accounts.
-      username: 'sudija2',
-      password: 'Sudija2026#6',
-      role: 'referee',
+      username: 'treci',
+      password: 'Tarik123!',
     });
   });
 
   it('masks the new password but lets the admin reveal it to read it out', async () => {
     setup({ 'GET /admin/users': { users: [me] } });
-    await userEvent.click(screen.getByRole('button', { name: 'Novi korisnik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Novi administrator' }));
     const dialog = await screen.findByRole('dialog');
     const password = within(dialog).getByLabelText('Lozinka');
     expect(password).toHaveAttribute('type', 'password');
@@ -72,18 +75,18 @@ describe('UsersTab', () => {
         body: { error: 'Korisničko ime je već zauzeto.', code: 'USERNAME_TAKEN' },
       },
     });
-    await userEvent.click(screen.getByRole('button', { name: 'Novi korisnik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Novi administrator' }));
     const dialog = await screen.findByRole('dialog');
-    await userEvent.type(within(dialog).getByLabelText('Ime i prezime'), 'Sudija 1');
-    await userEvent.type(within(dialog).getByLabelText('Korisničko ime'), 'sudija1');
-    await userEvent.type(within(dialog).getByLabelText('Lozinka'), 'Sudija2026#6');
+    await userEvent.type(within(dialog).getByLabelText('Ime i prezime'), 'Drugi Admin');
+    await userEvent.type(within(dialog).getByLabelText('Korisničko ime'), 'drugi');
+    await userEvent.type(within(dialog).getByLabelText('Lozinka'), 'Tarik123!');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
     expect(await screen.findByText('Korisničko ime je već zauzeto.')).toBeInTheDocument();
   });
 
   it('validates the new-user form locally', async () => {
     const { api } = setup({ 'GET /admin/users': { users: [me] } });
-    await userEvent.click(screen.getByRole('button', { name: 'Novi korisnik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Novi administrator' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.type(within(dialog).getByLabelText('Korisničko ime'), 'ab');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Spremi' }));
@@ -93,51 +96,63 @@ describe('UsersTab', () => {
 
   it('closes the create dialog on cancel', async () => {
     setup({ 'GET /admin/users': { users: [me] } });
-    await userEvent.click(screen.getByRole('button', { name: 'Novi korisnik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Novi administrator' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Odustani' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('deactivates a judge', async () => {
+  it('deactivates another administrator', async () => {
     const { api } = setup({
-      'GET /admin/users': { users: [me, user()] },
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
       'PATCH /admin/users/u1': { user: user({ isActive: false }) },
     });
-    await screen.findByText('Sudija 1');
-    await userEvent.click(within(row('Sudija 1')).getByRole('button', { name: 'Deaktiviraj' }));
+    await screen.findByText('Drugi Admin');
+    await userEvent.click(within(row('Drugi Admin')).getByRole('button', { name: 'Deaktiviraj' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PATCH')).toBe(true));
     expect(api.calls.find((c) => c.method === 'PATCH')!.body).toEqual({ isActive: false });
   });
 
   it('offers switch-off, edit and delete on every row', async () => {
-    setup({ 'GET /admin/users': { users: [me, user()] } });
-    await screen.findByText('Sudija 1');
-    const actions = within(row('Sudija 1')).getAllByRole('button');
+    setup({
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
+    });
+    await screen.findByText('Drugi Admin');
+    const actions = within(row('Drugi Admin')).getAllByRole('button');
     expect(actions.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
       'Deaktiviraj',
-      'Izmijeni — Sudija 1',
-      'Obrisati korisnika? Sudija 1',
+      'Izmijeni — Drugi Admin',
+      'Obrisati korisnika? Drugi Admin',
     ]);
   });
 
   it('opens the edit dialog filled with that row', async () => {
-    setup({ 'GET /admin/users': { users: [me, user()] } });
-    await screen.findByText('Sudija 1');
-    await userEvent.click(within(row('Sudija 1')).getByRole('button', { name: /Izmijeni/ }));
+    setup({
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
+    });
+    await screen.findByText('Drugi Admin');
+    await userEvent.click(within(row('Drugi Admin')).getByRole('button', { name: /Izmijeni/ }));
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByLabelText('Ime i prezime')).toHaveValue('Sudija 1');
+    expect(within(dialog).getByLabelText('Ime i prezime')).toHaveValue('Drugi Admin');
     // And it does not announce a password change nobody asked for.
     expect(within(dialog).queryByText(/odjavljen/)).not.toBeInTheDocument();
   });
 
   it('saves an edit and closes the dialog', async () => {
     const { api } = setup({
-      'GET /admin/users': { users: [me, user()] },
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
       'PATCH /admin/users/u1': { user: user({ displayName: 'Sudija Jedan' }) },
     });
-    await screen.findByText('Sudija 1');
-    await userEvent.click(within(row('Sudija 1')).getByRole('button', { name: /Izmijeni/ }));
+    await screen.findByText('Drugi Admin');
+    await userEvent.click(within(row('Drugi Admin')).getByRole('button', { name: /Izmijeni/ }));
 
     const dialog = await screen.findByRole('dialog');
     const name = within(dialog).getByLabelText('Ime i prezime');
@@ -152,9 +167,13 @@ describe('UsersTab', () => {
   });
 
   it('puts every row action on one centre line, with square icon buttons', async () => {
-    setup({ 'GET /admin/users': { users: [me, user()] } });
-    await screen.findByText('Sudija 1');
-    const actions = within(row('Sudija 1')).getAllByRole('button');
+    setup({
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
+    });
+    await screen.findByText('Drugi Admin');
+    const actions = within(row('Drugi Admin')).getAllByRole('button');
 
     // The Stack used to default to `stretch`, which left the button and the two
     // icons on three different baselines.
@@ -177,10 +196,19 @@ describe('UsersTab', () => {
   });
 
   it('offers to reactivate someone who is switched off', async () => {
-    setup({ 'GET /admin/users': { users: [me, user({ isActive: false })] } });
-    await screen.findByText('Sudija 1');
-    expect(within(row('Sudija 1')).getByRole('button', { name: 'Aktiviraj' })).toBeInTheDocument();
-    expect(within(row('Sudija 1')).getByText('Deaktiviran')).toBeInTheDocument();
+    setup({
+      'GET /admin/users': {
+        users: [
+          me,
+          user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin', isActive: false }),
+        ],
+      },
+    });
+    await screen.findByText('Drugi Admin');
+    expect(
+      within(row('Drugi Admin')).getByRole('button', { name: 'Aktiviraj' }),
+    ).toBeInTheDocument();
+    expect(within(row('Drugi Admin')).getByText('Deaktiviran')).toBeInTheDocument();
   });
 
   it('will not let an admin deactivate or delete themselves', async () => {
@@ -192,14 +220,16 @@ describe('UsersTab', () => {
     expect(within(mine).getByRole('button', { name: /Obrisati korisnika\?/ })).toBeDisabled();
   });
 
-  it('warns that deleting a judge destroys their votes, then deletes them', async () => {
+  it('warns that deleting an account destroys its data, then deletes it', async () => {
     const { api } = setup({
-      'GET /admin/users': { users: [me, user()] },
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
       'DELETE /admin/users/u1': { status: 204 },
     });
-    await screen.findByText('Sudija 1');
+    await screen.findByText('Drugi Admin');
     await userEvent.click(
-      within(row('Sudija 1')).getByRole('button', { name: /Obrisati korisnika\? Sudija 1/ }),
+      within(row('Drugi Admin')).getByRole('button', { name: /Obrisati korisnika\? Drugi Admin/ }),
     );
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/trajno se brišu i sve ocjene/)).toBeInTheDocument();
@@ -209,24 +239,30 @@ describe('UsersTab', () => {
 
   it("surfaces the API's refusal to switch off the last admin", async () => {
     setup({
-      'GET /admin/users': { users: [me, user()] },
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
       'PATCH /admin/users/u1': {
         status: 400,
         body: { error: 'Mora postojati barem jedan aktivan administrator.', code: 'LAST_ADMIN' },
       },
     });
-    await screen.findByText('Sudija 1');
-    await userEvent.click(within(row('Sudija 1')).getByRole('button', { name: 'Deaktiviraj' }));
+    await screen.findByText('Drugi Admin');
+    await userEvent.click(within(row('Drugi Admin')).getByRole('button', { name: 'Deaktiviraj' }));
     expect(
       await screen.findByText('Mora postojati barem jedan aktivan administrator.'),
     ).toBeInTheDocument();
   });
 
-  it('backs out of deleting a judge', async () => {
-    const { api } = setup({ 'GET /admin/users': { users: [me, user()] } });
-    await screen.findByText('Sudija 1');
+  it('backs out of deleting an administrator', async () => {
+    const { api } = setup({
+      'GET /admin/users': {
+        users: [me, user({ id: 'u1', username: 'drugi', displayName: 'Drugi Admin' })],
+      },
+    });
+    await screen.findByText('Drugi Admin');
     await userEvent.click(
-      within(row('Sudija 1')).getByRole('button', { name: /Obrisati korisnika\? Sudija 1/ }),
+      within(row('Drugi Admin')).getByRole('button', { name: /Obrisati korisnika\? Drugi Admin/ }),
     );
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Odustani' }));

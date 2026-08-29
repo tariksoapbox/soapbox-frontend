@@ -33,34 +33,38 @@ describe('teamFormSchema', () => {
 
 describe('userFormSchema', () => {
   const valid = {
-    displayName: 'Sudija 2',
-    username: 'Sudija2',
-    password: 'Sudija2026#6',
-    role: 'referee' as const,
+    displayName: 'Drugi Admin',
+    username: 'Drugi',
+    password: 'Tarik123!',
   };
 
   it('normalises the username to lowercase', () => {
-    expect(userFormSchema.parse(valid).username).toBe('sudija2');
+    expect(userFormSchema.parse(valid).username).toBe('drugi');
   });
 
   it.each([
     ['a short username', { username: 'ab' }],
-    ['a username with a space', { username: 'sudija 2' }],
-    ['a username with a diacritic', { username: 'sudijač' }],
+    ['a username with a space', { username: 'drugi admin' }],
+    ['a username with a diacritic', { username: 'drugič' }],
     ['a short password', { password: 'kratka' }],
     ['a short name', { displayName: 'S' }],
-    ['an unknown role', { role: 'superadmin' }],
   ])('rejects %s', (_label, override) => {
     expect(userFormSchema.safeParse({ ...valid, ...override }).success).toBe(false);
   });
 });
 
+describe('judgeFormSchema', () => {
+  it('is a name and nothing else — judges never sign in', async () => {
+    const { judgeFormSchema } = await import('./forms');
+    expect(judgeFormSchema.parse({ name: '  Buba Corelli  ', password: 'x' })).toEqual({
+      name: 'Buba Corelli',
+    });
+    expect(judgeFormSchema.safeParse({ name: 'B' }).success).toBe(false);
+  });
+});
+
 describe('userEditFormSchema', () => {
-  const valid = {
-    displayName: 'Sudija 2',
-    username: 'sudija2',
-    role: 'referee' as const,
-  };
+  const valid = { displayName: 'Drugi Admin', username: 'drugi' };
 
   it('treats a blank password as "keep the current one"', () => {
     expect(userEditFormSchema.safeParse({ ...valid, password: '' }).success).toBe(true);

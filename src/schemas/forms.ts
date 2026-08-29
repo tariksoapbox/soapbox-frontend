@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ROLES } from './contracts';
 
 /**
  * Form schemas, mirroring the backend's request schemas so a mistake is caught
@@ -44,7 +43,6 @@ export const userFormSchema = z.object({
     .string()
     .min(8, 'Lozinka mora imati najmanje 8 znakova.')
     .max(128, 'Lozinka smije imati najviše 128 znakova.'),
-  role: z.enum(ROLES),
 });
 export type UserForm = z.infer<typeof userFormSchema>;
 
@@ -57,6 +55,16 @@ export const userEditFormSchema = userFormSchema.extend({
   password: z.union([z.literal(''), userFormSchema.shape.password]),
 });
 export type UserEditForm = z.infer<typeof userEditFormSchema>;
+
+/** A judge is a name, so this is the whole form. */
+export const judgeFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Ime sudije mora imati najmanje 2 znaka.')
+    .max(80, 'Ime sudije smije imati najviše 80 znakova.'),
+});
+export type JudgeForm = z.infer<typeof judgeFormSchema>;
 
 export const runTimeFormSchema = z.object({
   // The parser lives on the backend (`lib/runTime.ts`); this only checks the

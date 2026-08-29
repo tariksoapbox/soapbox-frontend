@@ -3,24 +3,31 @@
  * the backend copy is authoritative. When the entities stop moving, extract
  * both into a shared `@soapbox/contracts` package.
  */
-export const ROLES = ['admin', 'referee'] as const;
-export type Role = (typeof ROLES)[number];
-
 export const CRITERIA = ['vehicle', 'performance'] as const;
 export type Criterion = (typeof CRITERIA)[number];
 
+/** Everyone who can sign in is an administrator; there is no role. */
 export interface SessionUser {
   id: string;
   username: string;
   displayName: string;
-  role: Role;
 }
 
 export interface AdminUser {
   id: string;
   username: string;
   displayName: string;
-  role: Role;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/**
+ * A judge is a name on the panel. They never sign in — they score on paper and
+ * the admin types the numbers in — so there is no username and no password.
+ */
+export interface Judge {
+  id: string;
+  name: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -32,25 +39,6 @@ export interface Team {
   runTimeMs: number | null;
   runTime: string | null;
   runTimeSetAt?: string | null;
-}
-
-export interface BallotCell {
-  points: number | null;
-  submittedAt: string | null;
-}
-
-export interface BallotTeam {
-  id: string;
-  name: string;
-  bibNumber: number | null;
-  vehicle: BallotCell;
-  performance: BallotCell;
-}
-
-export interface Ballot {
-  teams: BallotTeam[];
-  /** Cells this judge has not cast yet, across every team and both criteria. */
-  remaining: number;
 }
 
 export interface CriterionStanding {
@@ -86,16 +74,15 @@ export interface Standings {
   computedAt: string;
 }
 
+/** One judge's mark for one team and criterion. A missing entry is a blank. */
 export interface ScoreEntry {
-  id: string;
   teamId: string;
   judgeId: string;
   criterion: Criterion;
   points: number;
-  submittedAt: string;
 }
 
 export interface ScoreMatrix {
-  judges: { id: string; username: string; displayName: string; isActive: boolean }[];
+  judges: { id: string; name: string; isActive: boolean }[];
   scores: ScoreEntry[];
 }

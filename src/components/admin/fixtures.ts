@@ -1,4 +1,4 @@
-import type { AdminUser, ScoreEntry, Team } from '@/schemas/contracts';
+import type { AdminUser, Judge, ScoreEntry, Team } from '@/schemas/contracts';
 
 export function team(overrides: Partial<Team> = {}): Team {
   return {
@@ -14,9 +14,8 @@ export function team(overrides: Partial<Team> = {}): Team {
 export function user(overrides: Partial<AdminUser> = {}): AdminUser {
   return {
     id: 'u1',
-    username: 'sudija1',
-    displayName: 'Sudija 1',
-    role: 'referee',
+    username: 'admin',
+    displayName: 'Administrator',
     isActive: true,
     createdAt: '2026-08-21T09:00:00.000Z',
     ...overrides,
@@ -24,13 +23,15 @@ export function user(overrides: Partial<AdminUser> = {}): AdminUser {
 }
 
 export function score(overrides: Partial<ScoreEntry> = {}): ScoreEntry {
+  return { teamId: 't1', judgeId: 'j1', criterion: 'vehicle', points: 9, ...overrides };
+}
+
+export function judge(overrides: Partial<Judge> = {}): Judge {
   return {
-    id: 's1',
-    teamId: 't1',
-    judgeId: 'u1',
-    criterion: 'vehicle',
-    points: 9,
-    submittedAt: '2026-08-21T10:00:00.000Z',
+    id: 'j1',
+    name: 'Buba Corelli',
+    isActive: true,
+    createdAt: '2026-08-21T09:00:00.000Z',
     ...overrides,
   };
 }

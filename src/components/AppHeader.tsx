@@ -3,7 +3,7 @@
 import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Brand } from './Brand';
-import { common, roles } from '@/content/common';
+import { common } from '@/content/common';
 import { useLogout, useSession } from '@/lib/queries/session';
 
 /**
@@ -33,7 +33,7 @@ export function AppHeader() {
                   {user.displayName}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {roles[user.role]}
+                  {common.administrator}
                 </Typography>
               </Box>
               <Button

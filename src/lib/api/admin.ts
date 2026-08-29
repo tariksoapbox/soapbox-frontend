@@ -1,5 +1,5 @@
 import { apiDelete, apiFetch, apiPatch, apiPost, apiPut } from '../api';
-import type { AdminUser, Role, ScoreMatrix, Team } from '@/schemas/contracts';
+import type { AdminUser, Criterion, ScoreMatrix, Team } from '@/schemas/contracts';
 
 /* ---------------------------------------------------------------- users --- */
 
@@ -10,7 +10,6 @@ export interface CreateUserInput {
   username: string;
   password: string;
   displayName: string;
-  role: Role;
 }
 
 export const createUser = (input: CreateUserInput) =>
@@ -24,7 +23,6 @@ export const createUser = (input: CreateUserInput) =>
 export interface UpdateUserInput {
   displayName?: string;
   username?: string;
-  role?: Role;
   isActive?: boolean;
   /** Omit to keep the current password. */
   password?: string;
@@ -63,4 +61,19 @@ export const deleteTeam = (id: string) => apiDelete(`/admin/teams/${id}`);
 
 export const getScoreMatrix = () => apiFetch<ScoreMatrix>('/admin/scores');
 
-export const clearScore = (id: string) => apiDelete(`/admin/scores/${id}`);
+/** `null` clears that judge's mark back to blank rather than setting a zero. */
+export interface CriterionScore {
+  judgeId: string;
+  points: number | null;
+}
+
+/**
+ * Save one criterion for one team — the whole panel in a single write, which is
+ * how the scores actually arrive: a stack of cards for one run. Re-saving is
+ * how a correction is made.
+ */
+export const saveCriterionScores = (
+  teamId: string,
+  criterion: Criterion,
+  scores: CriterionScore[],
+) => apiPut<void>(`/admin/scores/${teamId}/${criterion}`, { scores });

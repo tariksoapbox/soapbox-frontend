@@ -15,8 +15,7 @@ import { RHFTextField } from '../RHFTextField';
 import { PasswordField } from '../PasswordField';
 import { FormAlert } from '../FormAlert';
 import { admin as copy } from '@/content/admin';
-import { common, roles } from '@/content/common';
-import { ROLES } from '@/schemas/contracts';
+import { common } from '@/content/common';
 import { userFormSchema, type UserForm } from '@/schemas/forms';
 import { useCreateUser } from '@/lib/queries/admin';
 
@@ -29,7 +28,7 @@ export function UserFormDialog({ open, onClose }: { open: boolean; onClose: () =
   const create = useCreateUser();
   const { control, handleSubmit, reset } = useForm<UserForm>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: { displayName: '', username: '', password: '', role: 'referee' },
+    defaultValues: { displayName: '', username: '', password: '' },
   });
 
   function close() {
@@ -73,13 +72,6 @@ export function UserFormDialog({ open, onClose }: { open: boolean; onClose: () =
               helperText={copy.users.passwordHelp}
               autoComplete="new-password"
             />
-            <RHFTextField control={control} name="role" label={copy.users.role} select>
-              {ROLES.map((role) => (
-                <MenuItem key={role} value={role}>
-                  {roles[role]}
-                </MenuItem>
-              ))}
-            </RHFTextField>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>

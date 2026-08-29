@@ -6,6 +6,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { theme } from '@/theme';
 import { ApiError } from '@/lib/api';
+import { BackendWakingNotice } from '@/components/BackendWakingNotice';
 
 /**
  * All client-side context, composed once.
@@ -36,7 +37,11 @@ export function Providers({ children }: { children: ReactNode }) {
     <AppRouterCacheProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          {/* Global: any call can be the one that wakes a sleeping backend. */}
+          <BackendWakingNotice />
+        </QueryClientProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

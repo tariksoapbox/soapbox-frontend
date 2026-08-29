@@ -32,8 +32,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe('UserEditDialog', () => {
   it('opens filled with the account as it stands', () => {
     setup();
-    expect(screen.getByLabelText('Ime i prezime')).toHaveValue('Sudija 1');
-    expect(screen.getByLabelText('Korisničko ime')).toHaveValue('sudija1');
+    expect(screen.getByLabelText('Ime i prezime')).toHaveValue('Administrator');
+    expect(screen.getByLabelText('Korisničko ime')).toHaveValue('admin');
   });
 
   it('does NOT announce a password change on open', async () => {
@@ -51,23 +51,23 @@ describe('UserEditDialog', () => {
     const { api } = setup();
     const name = screen.getByLabelText('Ime i prezime');
     await userEvent.clear(name);
-    await userEvent.type(name, 'Sudija Jedan');
+    await userEvent.type(name, 'Novo Ime');
     await userEvent.click(screen.getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(patchBody(api)).toBeDefined());
     // Not the username, not the role, and above all not the password.
-    expect(patchBody(api)).toEqual({ displayName: 'Sudija Jedan' });
+    expect(patchBody(api)).toEqual({ displayName: 'Novo Ime' });
   });
 
   it('omits the password entirely when the field was left blank', async () => {
     const { api } = setup();
     const username = screen.getByLabelText('Korisničko ime');
     await userEvent.clear(username);
-    await userEvent.type(username, 'sudija.jedan');
+    await userEvent.type(username, 'novo.ime');
     await userEvent.click(screen.getByRole('button', { name: 'Spremi' }));
 
     await waitFor(() => expect(patchBody(api)).toBeDefined());
-    expect(patchBody(api)).toEqual({ username: 'sudija.jedan' });
+    expect(patchBody(api)).toEqual({ username: 'novo.ime' });
     expect(patchBody(api)).not.toHaveProperty('password');
   });
 
@@ -77,15 +77,6 @@ describe('UserEditDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Spremi' }));
     await waitFor(() => expect(patchBody(api)).toBeDefined());
     expect(patchBody(api)).toEqual({ password: 'NovaLozinka1' });
-  });
-
-  it('can change a role', async () => {
-    const { api } = setup();
-    await userEvent.click(screen.getByRole('combobox', { name: 'Uloga' }));
-    await userEvent.click(screen.getByRole('option', { name: 'Administrator' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Spremi' }));
-    await waitFor(() => expect(patchBody(api)).toBeDefined());
-    expect(patchBody(api)).toEqual({ role: 'admin' });
   });
 
   it('closes without a request when nothing was touched', async () => {
@@ -125,7 +116,7 @@ describe('UserEditDialog', () => {
   it('updates the header when an admin edits their own account', async () => {
     // The header renders the session's copy of the current user, so this is the
     // bug it fixes: renaming yourself used to leave the old name up there.
-    const me = user({ id: 'u1', displayName: 'Stari Admin', role: 'admin' });
+    const me = user({ id: 'u1', displayName: 'Stari Admin' });
     // A stateful fake, so the refetch can actually show the change.
     let name = me.displayName;
     mockApi({

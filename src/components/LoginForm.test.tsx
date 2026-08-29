@@ -8,8 +8,7 @@ import { mockApi, type Routes } from '@/lib/queries/test-server';
 const replace = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 
-const admin = { id: 'a1', username: 'admin', displayName: 'Administrator', role: 'admin' };
-const judge = { id: 'u1', username: 'sudija1', displayName: 'Sudija 1', role: 'referee' };
+const admin = { id: 'a1', username: 'admin', displayName: 'Administrator' };
 
 function setup(routes: Routes) {
   const api = mockApi({ 'GET /auth/session': { user: null }, ...routes });
@@ -33,12 +32,6 @@ describe('LoginForm', () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/admin'));
     const post = api.calls.find((c) => c.method === 'POST')!;
     expect(post.body).toEqual({ username: 'admin', password: 'Soapbox2026#6' });
-  });
-
-  it('sends a judge to their ballot instead', async () => {
-    setup({ 'POST /auth/login': { user: judge } });
-    await signIn('sudija1', 'Sudija2026#6');
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/sudija'));
   });
 
   it("shows the API's rejection without saying which half was wrong", async () => {

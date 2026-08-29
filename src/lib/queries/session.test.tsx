@@ -17,7 +17,7 @@ function harness() {
   return { queryClient, wrapper };
 }
 
-const judge = { id: 'u1', username: 'sudija1', displayName: 'Sudija 1', role: 'referee' };
+const judge = { id: 'u1', username: 'sudija1', displayName: 'Sudija 1' };
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
@@ -37,13 +37,13 @@ describe('useLogout', () => {
     const { queryClient, wrapper } = harness();
     queryClient.setQueryData(queryKeys.session, judge);
     // Something another user must not inherit on a shared phone.
-    queryClient.setQueryData(queryKeys.ballot, { teams: [], remaining: 0 });
+    queryClient.setQueryData(queryKeys.judges, [{ id: 'j1', name: 'Buba Corelli' }]);
 
     const { result } = renderHook(() => useLogout(), { wrapper });
     result.current.mutate();
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/prijava'));
-    expect(queryClient.getQueryData(queryKeys.ballot)).toBeUndefined();
+    expect(queryClient.getQueryData(queryKeys.judges)).toBeUndefined();
     expect(queryClient.getQueryData(queryKeys.session)).toBeUndefined();
   });
 

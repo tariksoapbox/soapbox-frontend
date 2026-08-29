@@ -18,7 +18,6 @@ const judge: SessionUser = {
   id: 'u1',
   username: 'sudija1',
   displayName: 'Sudija 1',
-  role: 'referee',
 };
 const admin: SessionUser = {
   id: 'a1',
@@ -26,7 +25,6 @@ const admin: SessionUser = {
   // Not "Administrator" — that is also the role label, and a test that cannot
   // tell the two apart is not testing anything.
   displayName: 'Glavni Admin',
-  role: 'admin',
 };
 
 beforeEach(() => vi.clearAllMocks());

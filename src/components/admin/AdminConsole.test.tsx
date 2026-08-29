@@ -5,7 +5,7 @@ import { renderWithProviders } from '@/test-utils';
 import { AdminConsole } from './AdminConsole';
 import { mockApi } from '@/lib/queries/test-server';
 import { standingsFixture, teamStanding } from '../standings/fixtures';
-import { team, user } from './fixtures';
+import { judge, team, user } from './fixtures';
 
 function setup() {
   const api = mockApi({
@@ -13,10 +13,11 @@ function setup() {
     'GET /teams': { teams: [team()] },
     'GET /admin/users': { users: [user()] },
     'GET /admin/scores': {
-      judges: [{ id: 'u1', username: 'sudija1', displayName: 'Sudija 1', isActive: true }],
+      judges: [{ id: 'j1', name: 'Buba Corelli', isActive: true }],
       scores: [],
     },
-    'GET /auth/session': { user: user({ role: 'admin' }) },
+    'GET /admin/judges': { judges: [judge()] },
+    'GET /auth/session': { user: user() },
   });
   return { api, ...renderWithProviders(<AdminConsole />) };
 }
@@ -36,7 +37,8 @@ describe('AdminConsole', () => {
     for (const [tab, marker] of [
       ['Ekipe', 'Dodaj ekipu'],
       ['Ocjene', 'Kreativnost izrade vozila'],
-      ['Korisnici', 'Novi korisnik'],
+      ['Sudije', 'Dodaj sudiju'],
+      ['Administratori', 'Novi administrator'],
     ] as const) {
       await userEvent.click(screen.getByRole('tab', { name: tab }));
       expect(await screen.findAllByText(marker)).not.toHaveLength(0);
@@ -47,7 +49,7 @@ describe('AdminConsole', () => {
     const { api } = setup();
     await screen.findByText('Leteći Bosanci');
     expect(api.calls.some((c) => c.path === '/admin/users')).toBe(false);
-    await userEvent.click(screen.getByRole('tab', { name: 'Korisnici' }));
-    expect(await screen.findByText('Novi korisnik')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Administratori' }));
+    expect(await screen.findByText('Novi administrator')).toBeInTheDocument();
   });
 });

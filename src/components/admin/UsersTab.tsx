@@ -27,7 +27,6 @@ import { FormAlert } from '../FormAlert';
 import { UserFormDialog } from './UserFormDialog';
 import { UserEditDialog } from './UserEditDialog';
 import { admin as copy } from '@/content/admin';
-import { roles } from '@/content/common';
 import { useDeleteUser, useSetUserActive, useUsers } from '@/lib/queries/admin';
 import { useSession } from '@/lib/queries/session';
 import type { AdminUser } from '@/schemas/contracts';
@@ -71,7 +70,7 @@ export function UsersTab() {
           sits above a load error. */}
       {users.data && (
         <Stack spacing={1.5}>
-          <Alert severity="info">{copy.users.judgeCountNotice}</Alert>
+          <Alert severity="info">{copy.users.lastAdminNotice}</Alert>
           <Alert severity="info">{copy.users.editSafeNotice}</Alert>
         </Stack>
       )}
@@ -88,7 +87,6 @@ export function UsersTab() {
               <TableRow>
                 <TableCell>{copy.users.displayName}</TableCell>
                 <TableCell>{copy.users.username}</TableCell>
-                <TableCell>{copy.users.role}</TableCell>
                 <TableCell>{copy.users.active}</TableCell>
                 <TableCell align="right" />
               </TableRow>
@@ -109,7 +107,6 @@ export function UsersTab() {
                       )}
                     </TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{user.username}</TableCell>
-                    <TableCell>{roles[user.role]}</TableCell>
                     <TableCell>
                       {/* Colour is paired with a word, so the state is never carried by hue alone. */}
                       <Chip

@@ -1,7 +1,7 @@
 /** Every cache key in one place, so an invalidation can never miss a consumer. */
 export const queryKeys = {
   session: ['session'] as const,
-  ballot: ['judge', 'ballot'] as const,
+  judges: ['admin', 'judges'] as const,
   standings: ['standings'] as const,
   teams: ['teams'] as const,
   users: ['admin', 'users'] as const,

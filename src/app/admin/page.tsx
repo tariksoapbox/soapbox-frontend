@@ -7,7 +7,7 @@ import { admin } from '@/content/admin';
 
 export default function AdminPage() {
   return (
-    <AuthGuard role="admin">
+    <AuthGuard>
       <PageShell title={admin.title}>
         <AdminConsole />
       </PageShell>

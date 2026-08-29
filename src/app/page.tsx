@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, CircularProgress } from '@mui/material';
 import { useSession } from '@/lib/queries/session';
-import { homeFor, routes } from '@/lib/routes';
+import { routes } from '@/lib/routes';
 
 /**
- * The root is a switchboard, not a page: nothing in this app is public, so it
- * asks who you are and sends you to the one screen your role can use.
+ * The root is a switchboard, not a page: nothing here is public, and everyone
+ * who can sign in is an administrator — so there is exactly one destination.
  */
 export default function RootPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function RootPage() {
 
   useEffect(() => {
     if (isPending) return;
-    router.replace(user ? homeFor(user.role) : routes.login);
+    router.replace(user ? routes.admin : routes.login);
   }, [isPending, user, router]);
 
   return (
