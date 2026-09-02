@@ -88,10 +88,48 @@ export function PublicBoard({
         }}
       >
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>
-          <Box sx={{ mb: { xs: 3, md: 5 } }}>
-            {/* The event's own mark, above its own standings. Sized by height
-              so the two variants share one asset — it has a transparent
-              ground and reads on the navy and on the blue alike. */}
+          <Box
+            data-testid="board-header"
+            sx={{
+              mb: { xs: 3, md: 5 },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 3,
+            }}
+          >
+            <Box>
+              <Typography
+                component="h1"
+                sx={{
+                  fontFamily: boardDisplayFont,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  // Futura Condensed carries a larger size in the same width, and
+                  // wants tracking opened rather than tightened.
+                  fontSize: { xs: 40, md: 64 },
+                  letterSpacing: '.01em',
+                  lineHeight: 0.95,
+                }}
+              >
+                {copy.title}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 1,
+                  color: 'text.secondary',
+                  letterSpacing: '.2em',
+                  textTransform: 'uppercase',
+                  fontSize: 12,
+                }}
+              >
+                {copy.subtitle}
+              </Typography>
+            </Box>
+
+            {/* The event's own mark, opposite its own standings. Sized by
+              height so the two variants share one asset — it has a transparent
+              ground and reads on the navy and on the white alike. */}
             <Box
               component={Image}
               src={logo}
@@ -103,38 +141,13 @@ export function PublicBoard({
               height={600}
               priority
               sx={{
-                height: { xs: 64, md: 104 },
+                height: { xs: 56, md: 104 },
                 width: 'auto',
-                mb: { xs: 1.5, md: 2 },
                 display: 'block',
+                // The title wraps before the mark gives up any size.
+                flexShrink: 0,
               }}
             />
-            <Typography
-              component="h1"
-              sx={{
-                fontFamily: boardDisplayFont,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                // Futura Condensed carries a larger size in the same width, and
-                // wants tracking opened rather than tightened.
-                fontSize: { xs: 40, md: 64 },
-                letterSpacing: '.01em',
-                lineHeight: 0.95,
-              }}
-            >
-              {copy.title}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 1,
-                color: 'text.secondary',
-                letterSpacing: '.2em',
-                textTransform: 'uppercase',
-                fontSize: 12,
-              }}
-            >
-              {copy.subtitle}
-            </Typography>
           </Box>
 
           {isPending && !data ? (

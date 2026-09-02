@@ -177,11 +177,22 @@ describe('PublicBoard', () => {
     expect(await inkOf({ variant: 'dark' })).toBe('rgb(255, 255, 255)');
   });
 
-  it('leads with the event logo, above the title', async () => {
+  it('sets the logo opposite the title, on one centred row', async () => {
     setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
     const logo = await screen.findByAltText('Red Bull Soapbox Race');
     const heading = screen.getByRole('heading', { level: 1 });
-    // Order matters: the mark introduces the board, it does not caption it.
-    expect(logo.compareDocumentPosition(heading)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    const header = screen.getByTestId('board-header');
+
+    // One row holding both, pushed to its two ends and centred against each
+    // other — not stacked, which is what this replaced.
+    expect(header).toContainElement(logo);
+    expect(header).toContainElement(heading);
+    const style = getComputedStyle(header);
+    expect(style.display).toBe('flex');
+    expect(style.justifyContent).toBe('space-between');
+    expect(style.alignItems).toBe('center');
+    // The mark on the right: last in the row, and it never shrinks.
+    expect(header.lastElementChild).toBe(logo);
+    expect(getComputedStyle(logo).flexShrink).toBe('0');
   });
 });
