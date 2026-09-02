@@ -32,6 +32,21 @@ import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
  * lot of space — a board is read from across a room and in a photograph, so
  * anything that competes with the standings is working against it.
  */
+/** The page's own breathing room, above the first lap and below the last. */
+export const PAGE_PAD_Y = { xs: 3, md: 6 };
+
+/**
+ * The gap after each lap, in endless mode.
+ *
+ * It has a floor, not just a look: at the moment the scroll reaches the next
+ * copy, the strip of screen above that copy's header is showing the tail of the
+ * lap just finished — and after the reset the same strip is the page's top
+ * padding. Unless the gap is at least `PAGE_PAD_Y`, those two differ and the
+ * restart drops a sliver of the last row. Comfortably over it, so the end of
+ * the standings also reads as an ending rather than a collision.
+ */
+export const LAP_GAP = { xs: 8, md: 12 };
+
 export function PublicBoard({
   variant = 'dark',
   fontClassName,
@@ -235,8 +250,8 @@ export function PublicBoard({
             `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '1A' : '44'} 0%, transparent 62%)`,
         }}
       >
-        <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>
-          <Box ref={firstCopy} data-testid="board-copy">
+        <Container maxWidth="lg" sx={{ py: PAGE_PAD_Y, px: { xs: 2, md: 4 } }}>
+          <Box ref={firstCopy} data-testid="board-copy" sx={loop ? { pb: LAP_GAP } : undefined}>
             {boardContent}
           </Box>
 
@@ -246,7 +261,7 @@ export function PublicBoard({
             than jump back. Hidden from assistive tech, which should hear the
             standings once however many times they are drawn. */}
           {loop && data && (
-            <Box ref={secondCopy} aria-hidden data-testid="board-loop-copy">
+            <Box ref={secondCopy} aria-hidden data-testid="board-loop-copy" sx={{ pb: LAP_GAP }}>
               {boardContent}
             </Box>
           )}

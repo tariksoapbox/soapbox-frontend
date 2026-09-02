@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '@/test-utils';
-import { PublicBoard } from './PublicBoard';
+import { PublicBoard, LAP_GAP, PAGE_PAD_Y } from './PublicBoard';
 import { publicStandings, publicTeam } from './fixtures';
 import { mockApi, type Routes } from '@/lib/queries/test-server';
 import { startBoardScrollCycle } from '@/lib/boardScroll';
@@ -226,6 +226,49 @@ describe('PublicBoard', () => {
         });
       }
       expect(loopHeight?.()).toBe(1_500);
+    });
+
+    it('leaves at least the page padding between laps, at every breakpoint', () => {
+      // At the wrap point the strip above the next header is showing the tail
+      // of the lap just finished; after the reset the same strip is the page's
+      // top padding. A gap smaller than that padding makes the restart drop a
+      // sliver of the last row — so this is a floor, not a preference.
+      //
+      // Asserted on the tokens rather than on computed style: a responsive sx
+      // value emits only media-query rules, and jsdom applies none of them, so
+      // the rendered padding reads as 0 here whatever a browser would do.
+      expect(Object.keys(LAP_GAP)).toEqual(Object.keys(PAGE_PAD_Y));
+      for (const breakpoint of Object.keys(LAP_GAP) as Array<keyof typeof LAP_GAP>) {
+        expect(LAP_GAP[breakpoint]).toBeGreaterThanOrEqual(PAGE_PAD_Y[breakpoint]);
+      }
+    });
+
+    it('only spaces the laps apart when there are laps', async () => {
+      // Read off the stylesheet, since jsdom will not compute a media-query
+      // rule: does this copy's own class carry a bottom padding at all?
+      const spacesBelow = (el: Element) => {
+        const sheet = [...document.querySelectorAll('style')]
+          .map((tag) => tag.textContent ?? '')
+          .join('');
+        return el.className
+          .split(' ')
+          .filter((name) => name.startsWith('css-'))
+          .some((name) => new RegExp(`\\.${name}\\b[^.]*?padding-bottom`).test(sheet));
+      };
+
+      const { unmount } = setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        { autoScroll: true },
+      );
+      // A still board ends where its content ends; the gap belongs to the loop.
+      expect(spacesBelow((await screen.findAllByTestId('board-copy'))[0]!)).toBe(false);
+      unmount();
+
+      setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        { autoScroll: true, loop: true },
+      );
+      expect(spacesBelow((await screen.findAllByTestId('board-copy'))[0]!)).toBe(true);
     });
   });
 
