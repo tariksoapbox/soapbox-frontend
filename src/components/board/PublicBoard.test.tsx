@@ -74,9 +74,13 @@ describe('PublicBoard', () => {
     expect(BOARD_REFETCH_MS).toBe(60_000);
   });
 
-  it('waits gracefully before the first response', () => {
+  it('waits on a spinner alone, with no caption on screen', () => {
     setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
-    expect(screen.getByRole('status')).toHaveTextContent('Rezultati se učitavaju');
+    const status = screen.getByRole('status');
+    // Nothing visible but the spinner — the wording survives only as the
+    // accessible name, for anyone who cannot see it turn.
+    expect(status).toHaveTextContent('');
+    expect(screen.getByLabelText('Rezultati se učitavaju…')).toBeInTheDocument();
   });
 
   it('says so when the race has not started', async () => {

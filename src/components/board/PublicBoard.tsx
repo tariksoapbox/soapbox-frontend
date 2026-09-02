@@ -81,8 +81,17 @@ export function PublicBoard({
               role="status"
               aria-live="polite"
             >
-              <CircularProgress color="primary" />
-              <Typography sx={{ mt: 2, color: 'text.secondary' }}>{copy.waiting}</Typography>
+              {/* No caption: the spinner says it, and a line of text that only
+                exists for a second is one more thing on a board that should
+                only ever show standings. It carries the wording as its label
+                so a screen reader still gets it. */}
+              <CircularProgress
+                color="primary"
+                aria-label={copy.waiting}
+                size={64}
+                thickness={3}
+                sx={{ width: { xs: 48, md: 64 }, height: { xs: 48, md: 64 } }}
+              />
             </Box>
           ) : (
             <Stack spacing={{ xs: 1.25, md: 1.75 }}>
