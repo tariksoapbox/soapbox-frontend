@@ -8,3 +8,6 @@ coverage/
 *.log
 .DS_Store
 next-env.d.ts
+
+# TypeScript incremental build cache — rewritten on every build.
+*.tsbuildinfo
