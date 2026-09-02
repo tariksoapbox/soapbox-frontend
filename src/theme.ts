@@ -70,6 +70,21 @@ declare module '@mui/material/Typography' {
 
 const FONT = 'var(--font-poppins), system-ui, -apple-system, sans-serif';
 
+/**
+ * The public board runs on Futura for Red Bull, which the console does not: the
+ * licence is for the event's own screens, and Poppins is the better face for a
+ * dense table of inputs anyway. Both stacks fall back to Poppins so a board
+ * still renders correctly if the font file is slow or blocked.
+ */
+const BOARD_FONT = `var(--font-rb-book), ${FONT}`;
+
+/**
+ * Futura Condensed Bold, for the parts of a row that are read first — the
+ * place, the team, the total. Condensed buys roughly a fifth more characters
+ * per line, which is what lets the team names run as large as they do.
+ */
+export const boardDisplayFont = `var(--font-rb-cond), var(--font-rb-book), ${FONT}`;
+
 const NAVY = '#0B1436';
 const NAVY_PAPER = '#121F45';
 const NAVY_ELEVATED = '#17244F';
@@ -244,9 +259,17 @@ export const theme = createTheme({
  * Only the palette changes. Every component reads tokens, so nothing else has
  * to know which variant it is rendering into.
  */
+/** The default board: the app's dark palette, re-typeset in Futura. */
+export const darkBoardTheme = createTheme({
+  ...theme,
+  cssVariables: true,
+  typography: { ...theme.typography, fontFamily: BOARD_FONT },
+});
+
 export const lightBoardTheme = createTheme({
   ...theme,
   cssVariables: true,
+  typography: { ...theme.typography, fontFamily: BOARD_FONT },
   palette: {
     mode: 'light',
     // White on this red is 5.1:1, and this red on white is the same — the one

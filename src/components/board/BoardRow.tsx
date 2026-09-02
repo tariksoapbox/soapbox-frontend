@@ -2,6 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 import { board as copy } from '@/content/standings';
+import { boardDisplayFont } from '@/theme';
 import type { PublicTeam } from '@/schemas/contracts';
 
 /**
@@ -71,10 +72,14 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
         <Box sx={{ minWidth: 0 }}>
           <Typography
             sx={{
+              fontFamily: boardDisplayFont,
               fontWeight: 700,
-              fontSize: { xs: 20, md: 27 },
-              letterSpacing: '-0.01em',
-              lineHeight: 1.15,
+              textTransform: 'uppercase',
+              // Condensed takes the extra size without costing width, so the
+              // name stays the largest thing in the row after the total.
+              fontSize: { xs: 24, md: 34 },
+              letterSpacing: '.01em',
+              lineHeight: 1.1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -98,9 +103,10 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
         <Box sx={{ textAlign: 'right' }}>
           <Typography
             sx={{
+              fontFamily: boardDisplayFont,
               fontVariantNumeric: 'tabular-nums',
               fontWeight: 700,
-              fontSize: { xs: 26, md: 40 },
+              fontSize: { xs: 30, md: 46 },
               lineHeight: 1,
               color: podium ? 'primary.light' : 'text.primary',
             }}
@@ -136,9 +142,10 @@ function Position({ rank, podium }: { rank: number | null; podium: boolean }) {
     >
       <Typography
         sx={{
+          fontFamily: boardDisplayFont,
           fontVariantNumeric: 'tabular-nums',
           fontWeight: 700,
-          fontSize: { xs: 20, md: 27 },
+          fontSize: { xs: 24, md: 32 },
           lineHeight: 1,
           color: podium ? 'primary.contrastText' : 'text.secondary',
         }}
@@ -154,7 +161,13 @@ function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
       <Typography
-        sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: 22, lineHeight: 1.1 }}
+        sx={{
+          fontFamily: boardDisplayFont,
+          fontVariantNumeric: 'tabular-nums',
+          fontWeight: 700,
+          fontSize: 26,
+          lineHeight: 1.1,
+        }}
       >
         {value}
       </Typography>

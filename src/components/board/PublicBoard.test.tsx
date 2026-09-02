@@ -88,4 +88,12 @@ describe('PublicBoard', () => {
     setup({ 'GET /public/standings': { status: 500, body: { error: 'nope' } } });
     expect(await screen.findByRole('alert')).toHaveTextContent('Nema veze sa serverom');
   });
+
+  it('wears the font class the page hands it', async () => {
+    // The variables are declared by the server page, so if this class stops
+    // reaching the board the whole thing silently falls back to Poppins.
+    renderWithProviders(<PublicBoard fontClassName="rb-book rb-cond" />);
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading.closest('.rb-book.rb-cond')).not.toBeNull();
+  });
 });

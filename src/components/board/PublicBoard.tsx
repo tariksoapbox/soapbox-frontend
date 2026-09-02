@@ -4,7 +4,7 @@ import { Box, CircularProgress, Container, Stack, ThemeProvider, Typography } fr
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
-import { lightBoardTheme, theme } from '@/theme';
+import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
 
 /**
  * The scoreboard as an audience sees it: a screen at the venue, or a link
@@ -14,13 +14,25 @@ import { lightBoardTheme, theme } from '@/theme';
  * lot of space — a board is read from across a room and in a photograph, so
  * anything that competes with the standings is working against it.
  */
-export function PublicBoard({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
+export function PublicBoard({
+  variant = 'dark',
+  fontClassName,
+}: {
+  variant?: 'dark' | 'light';
+  /**
+   * Carries the Futura CSS variables. Declared by the page, because
+   * `next/font/local` cannot be called from a client component — and passed in
+   * rather than set globally so only this page loads the files.
+   */
+  fontClassName?: string;
+}) {
   const { data, isPending, error } = usePublicBoard();
   const light = variant === 'light';
 
   return (
-    <ThemeProvider theme={light ? lightBoardTheme : theme}>
+    <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
       <Box
+        className={fontClassName}
         sx={{
           minHeight: '100dvh',
           // One wash of red off the top, so the page reads as branded without a
@@ -38,10 +50,14 @@ export function PublicBoard({ variant = 'dark' }: { variant?: 'dark' | 'light' }
             <Typography
               component="h1"
               sx={{
+                fontFamily: boardDisplayFont,
                 fontWeight: 700,
-                fontSize: { xs: 32, md: 52 },
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
+                textTransform: 'uppercase',
+                // Futura Condensed carries a larger size in the same width, and
+                // wants tracking opened rather than tightened.
+                fontSize: { xs: 40, md: 64 },
+                letterSpacing: '.01em',
+                lineHeight: 0.95,
               }}
             >
               {copy.title}

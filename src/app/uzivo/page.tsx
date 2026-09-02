@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PublicBoard } from '@/components/board/PublicBoard';
+import { boardFontClassName } from './fonts';
 import { boardVariantFromUrl } from '@/lib/boardVariant';
 import { board } from '@/content/standings';
 import { common } from '@/content/common';
@@ -26,5 +27,7 @@ export default async function LiveBoardPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  return <PublicBoard variant={boardVariantFromUrl(params.tema)} />;
+  return (
+    <PublicBoard variant={boardVariantFromUrl(params.tema)} fontClassName={boardFontClassName} />
+  );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { lightBoardTheme, theme } from './theme';
+import { boardDisplayFont, darkBoardTheme, lightBoardTheme, theme } from './theme';
 
 /** WCAG relative luminance / contrast, so the palette is checked not asserted. */
 function luminance(hex: string): number {
@@ -55,5 +55,32 @@ describe('the two board palettes', () => {
     expect(lightBoardTheme.palette.brand.boardRowBg).not.toBe(
       lightBoardTheme.palette.brand.elevated,
     );
+  });
+
+  describe('typefaces', () => {
+    it('puts Futura on both board variants and leaves the console on Poppins', () => {
+      // The licence covers the event's own screens. The judging console is an
+      // internal tool and stays on the app face.
+      for (const t of [darkBoardTheme, lightBoardTheme]) {
+        expect(t.typography.fontFamily).toContain('--font-rb-book');
+      }
+      expect(theme.typography.fontFamily).not.toContain('--font-rb');
+      expect(theme.typography.fontFamily).toContain('--font-poppins');
+    });
+
+    it('falls back to Poppins if the Futura files never arrive', () => {
+      // A board that renders in the wrong face still reads; one that renders in
+      // Times, or not at all, does not.
+      for (const stack of [darkBoardTheme.typography.fontFamily, boardDisplayFont]) {
+        expect(stack).toContain('--font-poppins');
+        expect(stack).toMatch(/sans-serif$/);
+      }
+    });
+
+    it('reaches for the condensed cut first on display text', () => {
+      expect(boardDisplayFont.indexOf('--font-rb-cond')).toBeLessThan(
+        boardDisplayFont.indexOf('--font-rb-book'),
+      );
+    });
   });
 });
