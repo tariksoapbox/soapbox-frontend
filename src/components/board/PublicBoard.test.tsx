@@ -4,6 +4,11 @@ import { renderWithProviders } from '@/test-utils';
 import { PublicBoard } from './PublicBoard';
 import { publicStandings, publicTeam } from './fixtures';
 import { mockApi, type Routes } from '@/lib/queries/test-server';
+import { startBoardScrollCycle } from '@/lib/boardScroll';
+
+// The cycle itself is covered in boardScroll.test.ts; here the only question is
+// whether the board arms it, and disarms it again.
+vi.mock('@/lib/boardScroll', () => ({ startBoardScrollCycle: vi.fn(() => vi.fn()) }));
 
 function setup(routes: Routes, props: React.ComponentProps<typeof PublicBoard> = {}) {
   const api = mockApi(routes);
@@ -113,7 +118,8 @@ describe('PublicBoard', () => {
         { 'GET /public/standings': publicStandings([publicTeam({ rank: 4 })]) },
         props,
       );
-      const row = (await screen.findAllByTestId('board-row'))[0].firstElementChild!;
+      const [first] = await screen.findAllByTestId('board-row');
+      const row = first!.firstElementChild!;
       const bg = getComputedStyle(row).backgroundColor;
       unmount();
       return bg;
@@ -126,5 +132,29 @@ describe('PublicBoard', () => {
     // A white row on a white page, not a translucent white on navy.
     expect(lightVariant).toBe('rgb(255, 255, 255)');
     expect(dark).toBe('rgba(255, 255, 255, 0.025)');
+  });
+
+  describe('unattended scrolling', () => {
+    it('stays still unless the URL asked for it', async () => {
+      setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
+      await screen.findByText('Leteći Bosanci');
+      expect(startBoardScrollCycle).not.toHaveBeenCalled();
+    });
+
+    it('starts the cycle when asked, and stops it when the page goes away', async () => {
+      const stop = vi.fn();
+      vi.mocked(startBoardScrollCycle).mockReturnValue(stop);
+
+      const { unmount } = setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        { autoScroll: true },
+      );
+      await screen.findByText('Leteći Bosanci');
+      expect(startBoardScrollCycle).toHaveBeenCalledTimes(1);
+
+      // Without this the timers outlive the page and scroll whatever replaced it.
+      unmount();
+      expect(stop).toHaveBeenCalledTimes(1);
+    });
   });
 });

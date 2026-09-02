@@ -9,9 +9,11 @@ import {
   ThemeProvider,
   Typography,
 } from '@mui/material';
+import { useEffect } from 'react';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
+import { startBoardScrollCycle } from '@/lib/boardScroll';
 import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
 
 /**
@@ -25,6 +27,7 @@ import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
 export function PublicBoard({
   variant = 'dark',
   fontClassName,
+  autoScroll = false,
 }: {
   variant?: 'dark' | 'light';
   /**
@@ -33,9 +36,21 @@ export function PublicBoard({
    * rather than set globally so only this page loads the files.
    */
   fontClassName?: string;
+  /**
+   * Walk the page down the standings and back, for a screen nobody is
+   * standing at. Off by default — see `autoScrollFromUrl`.
+   */
+  autoScroll?: boolean;
 }) {
   const { data, isPending, error } = usePublicBoard();
   const light = variant === 'light';
+
+  // Started once, not per render: the cycle owns its own timers and the effect
+  // returns the stopper, so nothing keeps scrolling after this unmounts.
+  useEffect(() => {
+    if (!autoScroll) return;
+    return startBoardScrollCycle();
+  }, [autoScroll]);
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
