@@ -17,8 +17,10 @@
  * scale so there is one range to remember rather than three.
  */
 export interface BoardScrollSettings {
-  /** 1 slowest, 20 fastest. 10 is the pace the board shipped with. */
+  /** Descent. 1 slowest, 20 fastest. 10 is the pace the board shipped with. */
   speed: number;
+  /** The trip back up, same scale. 10 is the 700ms it shipped with. */
+  speedUp: number;
   /** Seconds at the top before setting off. */
   delayFromStart: number;
   /** Seconds at the bottom before coming back. */
@@ -29,6 +31,7 @@ export const SCROLL_RANGE = { min: 1, max: 20 } as const;
 
 export const SCROLL_DEFAULTS: BoardScrollSettings = {
   speed: 10,
+  speedUp: 10,
   delayFromStart: 10,
   delayAtEnd: 5,
 };
@@ -43,12 +46,21 @@ const PX_PER_SEC_PER_STEP = 9;
  *  deliberately fast setting on a short board. */
 const MIN_DOWN_MS_AT_DEFAULT_SPEED = 4_000;
 
+/**
+ * The return is a duration, not a pace: it is one movement rather than a second
+ * reading pass, so it should not get longer just because the board did. Divided
+ * by the setting so speed 10 gives the 700ms it shipped with, 20 halves it and
+ * 1 stretches it to seven seconds.
+ */
+const UP_MS_AT_SPEED_ONE = 7_000;
+
 /** Turns what the URL asked for into what the cycle runs on. */
 export function cycleOptionsFor(settings: BoardScrollSettings): ScrollCycleOptions {
   return {
     holdTopMs: settings.delayFromStart * 1_000,
     holdBottomMs: settings.delayAtEnd * 1_000,
     downPxPerSec: settings.speed * PX_PER_SEC_PER_STEP,
+    upMs: UP_MS_AT_SPEED_ONE / settings.speedUp,
     minDownMs: (MIN_DOWN_MS_AT_DEFAULT_SPEED * SCROLL_DEFAULTS.speed) / settings.speed,
   };
 }

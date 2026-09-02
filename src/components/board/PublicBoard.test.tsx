@@ -169,11 +169,19 @@ describe('PublicBoard', () => {
     it('hands the cycle the pace the URL asked for', async () => {
       setup(
         { 'GET /public/standings': publicStandings([publicTeam()]) },
-        { autoScroll: true, scrollSettings: { speed: 20, delayFromStart: 2, delayAtEnd: 15 } },
+        {
+          autoScroll: true,
+          scrollSettings: { speed: 20, speedUp: 20, delayFromStart: 2, delayAtEnd: 15 },
+        },
       );
       await screen.findByText('Leteći Bosanci');
       expect(startBoardScrollCycle).toHaveBeenCalledWith(
-        expect.objectContaining({ holdTopMs: 2_000, holdBottomMs: 15_000, downPxPerSec: 180 }),
+        expect.objectContaining({
+          holdTopMs: 2_000,
+          holdBottomMs: 15_000,
+          downPxPerSec: 180,
+          upMs: 350,
+        }),
       );
     });
   });

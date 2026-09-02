@@ -190,6 +190,7 @@ describe('cycleOptionsFor', () => {
       holdTopMs: 10_000,
       holdBottomMs: 5_000,
       downPxPerSec: 90,
+      upMs: 700,
       minDownMs: 4_000,
     });
   });
@@ -200,7 +201,7 @@ describe('cycleOptionsFor', () => {
   });
 
   it('turns the delays into milliseconds', () => {
-    const o = cycleOptionsFor({ speed: 10, delayFromStart: 3, delayAtEnd: 20 });
+    const o = cycleOptionsFor({ speed: 10, speedUp: 10, delayFromStart: 3, delayAtEnd: 20 });
     expect(o.holdTopMs).toBe(3_000);
     expect(o.holdBottomMs).toBe(20_000);
   });
@@ -210,5 +211,19 @@ describe('cycleOptionsFor', () => {
     // slower than the same board at speed 10.
     expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 20 }).minDownMs).toBe(2_000);
     expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 5 }).minDownMs).toBe(8_000);
+  });
+
+  it('scales the return trip without letting it depend on the board length', () => {
+    // A duration, not a pace: coming back is one movement, so it should not get
+    // longer just because more teams have run.
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 20 }).upMs).toBe(350);
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 1 }).upMs).toBe(7_000);
+  });
+
+  it('keeps the two speeds independent', () => {
+    const o = cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 1, speedUp: 20 });
+    // Crawl down, snap back — a perfectly reasonable thing to ask for.
+    expect(o.downPxPerSec).toBe(9);
+    expect(o.upMs).toBe(350);
   });
 });

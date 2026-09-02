@@ -3,6 +3,7 @@ import {
   autoScrollFromUrl,
   boardScrollSettingsFromUrl,
   scrollNumberFromUrl,
+  SCROLL_PARAMS,
 } from './boardAutoScroll';
 import { SCROLL_DEFAULTS } from './boardScroll';
 
@@ -61,19 +62,44 @@ describe('scrollNumberFromUrl', () => {
 describe('boardScrollSettingsFromUrl', () => {
   it('defaults to the pace the board shipped with', () => {
     expect(boardScrollSettingsFromUrl({})).toEqual(SCROLL_DEFAULTS);
-    expect(SCROLL_DEFAULTS).toEqual({ speed: 10, delayFromStart: 10, delayAtEnd: 5 });
+    expect(SCROLL_DEFAULTS).toEqual({
+      speed: 10,
+      speedUp: 10,
+      delayFromStart: 10,
+      delayAtEnd: 5,
+    });
   });
 
-  it('reads all three, independently', () => {
+  it('reads all four, independently', () => {
     expect(
-      boardScrollSettingsFromUrl({ speed: '20', delayFromStart: '3', delayAtEnd: '15' }),
-    ).toEqual({ speed: 20, delayFromStart: 3, delayAtEnd: 15 });
+      boardScrollSettingsFromUrl({
+        brzina: '20',
+        brzinaGore: '4',
+        pauzaNaVrhu: '3',
+        pauzaNaDnu: '15',
+      }),
+    ).toEqual({ speed: 20, speedUp: 4, delayFromStart: 3, delayAtEnd: 15 });
   });
 
   it('leaves the others alone when only one is given', () => {
-    expect(boardScrollSettingsFromUrl({ speed: '2' })).toEqual({
+    expect(boardScrollSettingsFromUrl({ brzina: '2' })).toEqual({
       ...SCROLL_DEFAULTS,
       speed: 2,
     });
+  });
+
+  it('reads Bosnian keys only — the URL is for the people running the race', () => {
+    // The English names were live for a matter of minutes; nobody holds a link
+    // with them, and two spellings for one knob is a support problem.
+    expect(
+      boardScrollSettingsFromUrl({ speed: '20', delayFromStart: '2', delayAtEnd: '2' }),
+    ).toEqual(SCROLL_DEFAULTS);
+  });
+
+  it('names every setting exactly once', () => {
+    // A typo'd map entry would silently leave one knob permanently at default.
+    const mapped = Object.values(SCROLL_PARAMS);
+    expect(new Set(mapped).size).toBe(mapped.length);
+    expect(mapped.sort()).toEqual(Object.keys(SCROLL_DEFAULTS).sort());
   });
 });

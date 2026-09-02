@@ -21,11 +21,12 @@ import { common } from '@/content/common';
  * at a self-scrolling board and another at a still one from the same app. The
  * two combine: /uzivo?tema=svijetla&vrti
  *
- * The cycle takes three numbers, all on a 1–20 scale and all clamped into it:
+ * The cycle takes four numbers, all on a 1–20 scale and all clamped into it:
  *
- *   speed=10           pace of the descent (default; 1 crawls, 20 runs)
- *   delayFromStart=10  seconds at the top before setting off
- *   delayAtEnd=5       seconds at the bottom before coming back
+ *   brzina=10        pace of the descent (1 crawls, 20 runs)
+ *   brzinaGore=10    pace of the trip back up
+ *   pauzaNaVrhu=10   seconds at the top before setting off
+ *   pauzaNaDnu=5     seconds at the bottom before coming back
  */
 export const metadata: Metadata = {
   title: `${board.title} — ${common.appName}`,

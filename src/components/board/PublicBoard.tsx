@@ -58,13 +58,13 @@ export function PublicBoard({
 
   // Started once, not per render: the cycle owns its own timers and the effect
   // returns the stopper, so nothing keeps scrolling after this unmounts.
-  const { speed, delayFromStart, delayAtEnd } = scrollSettings;
+  const { speed, speedUp, delayFromStart, delayAtEnd } = scrollSettings;
   useEffect(() => {
     if (!autoScroll) return;
     // Depending on the three numbers rather than the object: a fresh object
     // every render would restart the cycle every render.
-    return startBoardScrollCycle(cycleOptionsFor({ speed, delayFromStart, delayAtEnd }));
-  }, [autoScroll, speed, delayFromStart, delayAtEnd]);
+    return startBoardScrollCycle(cycleOptionsFor({ speed, speedUp, delayFromStart, delayAtEnd }));
+  }, [autoScroll, speed, speedUp, delayFromStart, delayAtEnd]);
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>

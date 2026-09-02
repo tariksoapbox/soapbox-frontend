@@ -41,13 +41,30 @@ export function scrollNumberFromUrl(
   return Math.min(SCROLL_RANGE.max, Math.max(SCROLL_RANGE.min, parsed));
 }
 
-/** All three knobs at once, defaulted and clamped. */
+/**
+ * The URL keys, in Bosnian — this link is typed and read by the people running
+ * the race, and every other parameter on this page (`tema`, `vrti`) is already
+ * in their language. The code behind them stays English, like the rest of the
+ * codebase; only what an operator sees is translated.
+ */
+export const SCROLL_PARAMS = {
+  /** Descent pace. */
+  brzina: 'speed',
+  /** Pace of the trip back up. */
+  brzinaGore: 'speedUp',
+  /** Seconds held at the top. */
+  pauzaNaVrhu: 'delayFromStart',
+  /** Seconds held at the bottom. */
+  pauzaNaDnu: 'delayAtEnd',
+} as const satisfies Record<string, keyof BoardScrollSettings>;
+
+/** All four knobs at once, defaulted and clamped. */
 export function boardScrollSettingsFromUrl(
   params: Record<string, string | string[] | undefined>,
 ): BoardScrollSettings {
-  return {
-    speed: scrollNumberFromUrl(params.speed, SCROLL_DEFAULTS.speed),
-    delayFromStart: scrollNumberFromUrl(params.delayFromStart, SCROLL_DEFAULTS.delayFromStart),
-    delayAtEnd: scrollNumberFromUrl(params.delayAtEnd, SCROLL_DEFAULTS.delayAtEnd),
-  };
+  const settings = { ...SCROLL_DEFAULTS };
+  for (const [urlKey, setting] of Object.entries(SCROLL_PARAMS)) {
+    settings[setting] = scrollNumberFromUrl(params[urlKey], SCROLL_DEFAULTS[setting]);
+  }
+  return settings;
 }
