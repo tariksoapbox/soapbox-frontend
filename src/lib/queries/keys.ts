@@ -19,3 +19,13 @@ export const queryKeys = {
  * takes a person to read a row.
  */
 export const LIVE_REFETCH_MS = 3000;
+
+/**
+ * How often the PUBLIC scoreboard re-polls.
+ *
+ * A minute, not three seconds: an audience screen is read, not operated, and a
+ * board whose numbers twitch every few seconds is harder to read than one that
+ * settles. It also means a room full of phones costs the free-tier API twenty
+ * times less traffic.
+ */
+export const BOARD_REFETCH_MS = 60_000;

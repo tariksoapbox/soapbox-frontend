@@ -62,11 +62,10 @@ describe('BoardRow', () => {
     // A dash, never a 0 or a made-up place.
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     expect(screen.getByText('–')).toBeInTheDocument();
-    expect(screen.getByText(/Privremeno/)).toBeInTheDocument();
   });
 
-  it('says nothing extra for a settled row', () => {
-    renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+  it('carries no status commentary — the board shows standings, nothing else', () => {
+    renderWithProviders(<BoardRow team={publicTeam({ final: false })} index={0} />);
     expect(screen.queryByText(/Privremeno/)).not.toBeInTheDocument();
   });
 

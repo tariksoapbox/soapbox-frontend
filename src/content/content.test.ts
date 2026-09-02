@@ -30,11 +30,11 @@ describe('copy', () => {
 
   it('gives the public board its own compact copy', () => {
     // The board is read across a room, so its labels are short where the
-    // console's are explanatory.
+    // console's are explanatory — and it carries no status commentary at all.
     expect(board.vehicle).toBe('Vozilo');
-    expect(board.judgesOf(3, 5)).toBe('3/5');
     expect(board.noTime).toBe('—');
-    expect(board.eventComplete).toBe('Konačni rezultati');
+    expect(board).not.toHaveProperty('provisional');
+    expect(board).not.toHaveProperty('eventComplete');
   });
 
   it('builds the judge-progress strings', () => {

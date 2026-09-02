@@ -38,15 +38,17 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '52px 1fr 76px', md: '64px 1fr repeat(3, 96px) 104px' },
+          gridTemplateColumns: { xs: '58px 1fr 88px', md: '76px 1fr repeat(3, 108px) 124px' },
           alignItems: 'center',
-          gap: { xs: 1.5, md: 2 },
-          px: { xs: 2, md: 3 },
-          py: { xs: 1.5, md: 1.75 },
+          gap: { xs: 1.5, md: 2.5 },
+          px: { xs: 2, md: 3.5 },
+          py: { xs: 2, md: 2.5 },
           borderRadius: 2,
-          bgcolor: podium ? 'rgba(219,10,64,0.10)' : 'rgba(255,255,255,0.025)',
+          // Tokens, not literals: the light variant is a palette swap, so a
+          // hard-coded white here would be invisible on a white page.
+          bgcolor: podium ? 'brand.boardPodiumBg' : 'brand.boardRowBg',
           border: 1,
-          borderColor: podium ? 'rgba(219,10,64,0.45)' : 'rgba(255,255,255,0.07)',
+          borderColor: podium ? 'brand.boardPodiumBorder' : 'brand.boardRowBorder',
           position: 'relative',
           overflow: 'hidden',
           // One red edge on the leaders — the single flourish, and it marks
@@ -70,7 +72,7 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
           <Typography
             sx={{
               fontWeight: 700,
-              fontSize: { xs: 17, md: 21 },
+              fontSize: { xs: 20, md: 27 },
               letterSpacing: '-0.01em',
               lineHeight: 1.15,
               overflow: 'hidden',
@@ -80,17 +82,13 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
           >
             {team.name}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.secondary', letterSpacing: '.08em', textTransform: 'uppercase' }}
-          >
-            {[
-              team.bibNumber !== null ? `#${team.bibNumber}` : null,
-              team.final ? null : copy.provisional,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </Typography>
+          {team.bibNumber !== null && (
+            <Typography
+              sx={{ color: 'text.secondary', letterSpacing: '.08em', fontSize: { xs: 12, md: 14 } }}
+            >
+              #{team.bibNumber}
+            </Typography>
+          )}
         </Box>
 
         <Metric label={copy.vehicle} value={team.vehicle.total} />
@@ -102,7 +100,7 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
             sx={{
               fontVariantNumeric: 'tabular-nums',
               fontWeight: 700,
-              fontSize: { xs: 22, md: 30 },
+              fontSize: { xs: 26, md: 40 },
               lineHeight: 1,
               color: podium ? 'primary.light' : 'text.primary',
             }}
@@ -126,8 +124,8 @@ function Position({ rank, podium }: { rank: number | null; podium: boolean }) {
   return (
     <Box
       sx={{
-        width: { xs: 44, md: 54 },
-        height: { xs: 44, md: 54 },
+        width: { xs: 48, md: 62 },
+        height: { xs: 48, md: 62 },
         display: 'grid',
         placeItems: 'center',
         borderRadius: 1.5,
@@ -140,7 +138,7 @@ function Position({ rank, podium }: { rank: number | null; podium: boolean }) {
         sx={{
           fontVariantNumeric: 'tabular-nums',
           fontWeight: 700,
-          fontSize: { xs: 18, md: 22 },
+          fontSize: { xs: 20, md: 27 },
           lineHeight: 1,
           color: podium ? 'primary.contrastText' : 'text.secondary',
         }}
@@ -156,7 +154,7 @@ function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
       <Typography
-        sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: 18, lineHeight: 1.1 }}
+        sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: 22, lineHeight: 1.1 }}
       >
         {value}
       </Typography>

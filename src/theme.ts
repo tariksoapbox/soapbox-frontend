@@ -34,6 +34,12 @@ interface BrandPalette {
   bronze: string;
   /** The scoreboard's "not submitted yet" cell. */
   pending: string;
+  /** Public scoreboard rows. Held as tokens so the light variant is a palette
+   *  swap rather than a second set of components. */
+  boardRowBg: string;
+  boardRowBorder: string;
+  boardPodiumBg: string;
+  boardPodiumBorder: string;
 }
 
 declare module '@mui/material/styles' {
@@ -97,6 +103,10 @@ export const theme = createTheme({
       silver: '#C0C6E0',
       bronze: '#E0A96D',
       pending: '#6E7BB0',
+      boardRowBg: 'rgba(255,255,255,0.025)',
+      boardRowBorder: 'rgba(255,255,255,0.07)',
+      boardPodiumBg: 'rgba(219,10,64,0.10)',
+      boardPodiumBorder: 'rgba(219,10,64,0.45)',
     },
   },
   shape: { borderRadius: 14 },
@@ -219,6 +229,51 @@ export const theme = createTheme({
     },
     MuiAlert: {
       defaultProps: { variant: 'outlined' },
+    },
+  },
+});
+
+/**
+ * The light scoreboard.
+ *
+ * Same brand, inverted ground: navy becomes the ink instead of the surface, and
+ * the red stays exactly where it was. It exists for screens and print where a
+ * dark page is the wrong answer — a projector washing out, a photograph, a
+ * printed result sheet.
+ *
+ * Only the palette changes. Every component reads tokens, so nothing else has
+ * to know which variant it is rendering into.
+ */
+export const lightBoardTheme = createTheme({
+  ...theme,
+  cssVariables: true,
+  palette: {
+    mode: 'light',
+    // White on this red is 5.1:1, and this red on white is the same — the one
+    // colour that needed no adjustment.
+    primary: { main: RED, light: '#B00734', dark: '#8E0429', contrastText: WHITE },
+    secondary: { main: NAVY, light: '#2A3868', dark: '#05091F', contrastText: WHITE },
+    background: { default: '#FFFFFF', paper: '#F6F8FC' },
+    // Navy as ink: 15.9:1 on white.
+    text: { primary: NAVY, secondary: '#535E85' },
+    divider: '#DFE4F0',
+    success: { main: '#137A4E', contrastText: WHITE },
+    warning: { main: '#8A6100', contrastText: WHITE },
+    error: { main: '#C0261E', contrastText: WHITE },
+    info: { main: '#1F5FA8', contrastText: WHITE },
+    brand: {
+      elevated: '#EFF2F9',
+      rowHover: '#E7ECF7',
+      fieldBorder: '#8B95B8',
+      redText: '#B00734',
+      gold: '#9A7500',
+      silver: '#6C7492',
+      bronze: '#8A5A22',
+      pending: '#767FA3',
+      boardRowBg: '#FFFFFF',
+      boardRowBorder: '#E3E8F3',
+      boardPodiumBg: 'rgba(219,10,64,0.07)',
+      boardPodiumBorder: 'rgba(219,10,64,0.40)',
     },
   },
 });

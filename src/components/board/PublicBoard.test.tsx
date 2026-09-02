@@ -37,22 +37,41 @@ describe('PublicBoard', () => {
     expect(rows[1]).toHaveTextContent('Druga');
   });
 
-  it('shows when the board was computed, so a frozen screen is detectable', async () => {
+  it('carries no wordmark, status chip or timestamp — just the standings', async () => {
     setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
     await screen.findByText('Leteći Bosanci');
-    expect(screen.getByText(/\d{2}:\d{2}:\d{2}/)).toBeInTheDocument();
-  });
-
-  it('calls the results final only when every row is settled', async () => {
-    setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
-    expect(await screen.findByText('Konačni rezultati')).toBeInTheDocument();
-  });
-
-  it('labels a board still in progress as provisional', async () => {
-    setup({ 'GET /public/standings': publicStandings([publicTeam({ final: false })]) });
-    await screen.findByText('Leteći Bosanci');
+    expect(screen.queryByText('Soapbox')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sistem bodovanja')).not.toBeInTheDocument();
     expect(screen.queryByText('Konačni rezultati')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Privremeno').length).toBeGreaterThan(0);
+    // The bare clock read as a mystery number, so it is gone from the header.
+    expect(screen.queryByText(/^\d{2}:\d{2}:\d{2}$/)).not.toBeInTheDocument();
+    // And no per-row "Privremeno" either — the board shows standings, not
+    // commentary on how settled each one is.
+    expect(screen.queryByText(/Privremeno/)).not.toBeInTheDocument();
+  });
+
+  it('leads with the ranking itself', async () => {
+    setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
+    await screen.findByText('Leteći Bosanci');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Rang lista');
+  });
+
+  it('renders the same rows in the white variant', async () => {
+    // The variant is a palette swap, so the components must not change shape.
+    // Which colours each palette supplies is asserted in theme.test.ts, where
+    // the values are readable — a rendered element only reports the CSS
+    // variable name, which is identical in both.
+    mockApi({ 'GET /public/standings': publicStandings([publicTeam()]) });
+    const { getAllByTestId, findByText } = renderWithProviders(<PublicBoard variant="light" />);
+    await findByText('Leteći Bosanci');
+    expect(getAllByTestId('board-row')).toHaveLength(1);
+  });
+
+  it('polls once a minute, not every few seconds', async () => {
+    const { BOARD_REFETCH_MS } = await import('@/lib/queries/keys');
+    // An audience screen is read, not operated; numbers twitching every three
+    // seconds are harder to read than a board that settles.
+    expect(BOARD_REFETCH_MS).toBe(60_000);
   });
 
   it('waits gracefully before the first response', () => {
