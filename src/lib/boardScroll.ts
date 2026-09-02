@@ -77,13 +77,12 @@ export interface ScrollCycleOptions {
   /**
    * Turns the cycle into an endless crawl instead of a there-and-back.
    *
-   * The caller renders the standings twice and returns the distance between the
-   * two copies' first rows. Scrolling exactly that far puts the second copy
-   * where the first one started, so subtracting it from the scroll position is
-   * invisible — the board appears to run forever without ever coming back up.
+   * The caller renders the whole board twice and returns the distance between
+   * the two copies' tops. Scrolling exactly that far puts the second copy where
+   * the first one started, so resetting to zero from there is invisible.
    *
-   * Returns 0 before the copies have laid out; the cycle just keeps scrolling
-   * and picks the wrap up on a later frame.
+   * Returns 0 before the copies have laid out, or when the board fits on one
+   * screen; the cycle waits and asks again rather than giving up.
    */
   loopHeight?: () => number;
 }
@@ -152,43 +151,55 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
   };
 
   /**
-   * Endless mode. Constant velocity, no easing: easing exists to soften a start
-   * and a stop, and this has neither. `holdTopMs` still applies once, so the
-   * leaders can be read before the board sets off; `holdBottomMs` and the
-   * return pace have nothing to describe here and are ignored.
+   * Endless mode.
+   *
+   * The caller renders the whole board twice. This runs from the top of the
+   * first copy to the top of the second — at which point the two are showing
+   * the same thing, so setting the scroll back to zero is invisible. The board
+   * looks like it reaches the end, pauses, and starts again, with the logo and
+   * the title coming back round rather than scrolling away for good.
+   *
+   * The pause between laps is `holdTopMs`: every rest in this mode is at the
+   * top of the list, so one number describes them all. `holdBottomMs` and the
+   * return pace have no bottom and no return to describe, and are ignored.
    */
   const loop = () => {
     wait(holdTopMs, () => {
-      // Anyone asking for less motion gets the same tour, a screen at a time,
-      // at the same average pace — rather than continuous travel.
-      if (prefersReducedMotion()) {
-        const advance = () => {
-          window.scrollTo(0, wrapped(window.scrollY + window.innerHeight));
-          wait((window.innerHeight / downPxPerSec) * 1_000, advance);
-        };
-        advance();
+      const distance = loopHeight?.() ?? 0;
+      // Not laid out yet, or a board that fits the screen. Come back to it.
+      if (distance <= 0) {
+        loop();
         return;
       }
-
-      // Tracked rather than read back each frame: scrollY is rounded, and the
-      // error would accumulate over an hour of continuous scrolling.
-      let y = window.scrollY;
-      let last = performance.now();
-      const step = (now: number) => {
-        if (stopped) return;
-        y = wrapped(y + downPxPerSec * ((now - last) / 1_000));
-        last = now;
-        window.scrollTo(0, y);
-        frame = requestAnimationFrame(step);
+      const restart = () => {
+        window.scrollTo(0, 0);
+        loop();
       };
-      frame = requestAnimationFrame(step);
+      if (prefersReducedMotion()) {
+        stepThrough(distance, restart);
+        return;
+      }
+      animateTo(distance, Math.max(minDownMs, (distance / downPxPerSec) * 1_000), restart);
     });
   };
 
-  /** Subtracts one copy of the list once we are past it. */
-  const wrapped = (y: number) => {
-    const height = loopHeight?.() ?? 0;
-    return height > 0 && y >= height ? y - height : y;
+  /**
+   * The reduced-motion tour: a screen at a time, at the pace the smooth version
+   * would have averaged. Someone who has asked for less motion still gets to
+   * see the whole board, just without the travel.
+   */
+  const stepThrough = (distance: number, done: () => void) => {
+    const stride = window.innerHeight;
+    const advance = () => {
+      const next = window.scrollY + stride;
+      if (next >= distance) {
+        done();
+        return;
+      }
+      window.scrollTo(0, next);
+      wait((stride / downPxPerSec) * 1_000, advance);
+    };
+    wait((stride / downPxPerSec) * 1_000, advance);
   };
 
   const cycle = () => {

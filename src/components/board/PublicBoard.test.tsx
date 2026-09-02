@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '@/test-utils';
 import { PublicBoard } from './PublicBoard';
 import { publicStandings, publicTeam } from './fixtures';
@@ -200,7 +200,15 @@ describe('PublicBoard', () => {
       // Two on the page, one in the accessibility tree: the standings are read
       // out once however many times they are drawn.
       expect(await screen.findAllByText('Prva')).toHaveLength(2);
-      expect(screen.getByTestId('board-loop-copy')).toHaveAttribute('aria-hidden');
+      const second = screen.getByTestId('board-loop-copy');
+      expect(second).toHaveAttribute('aria-hidden');
+
+      // The repeated unit is the whole board, not just the rows — the logo and
+      // the title come back round rather than scrolling away for good.
+      expect(screen.getAllByAltText('Red Bull Soapbox Race')).toHaveLength(2);
+      expect(within(second).getByText('Rang lista')).toBeInTheDocument();
+      expect(within(second).getByAltText('Red Bull Soapbox Race')).toBeInTheDocument();
+      expect(within(second).getByText('Prva')).toBeInTheDocument();
 
       // And the cycle is given a way to measure the wrap: the distance between
       // the two copies' tops, which is the only distance that hides the seam.
@@ -208,7 +216,7 @@ describe('PublicBoard', () => {
       expect(loopHeight).toBeTypeOf('function');
 
       const offsets: Array<[string, number]> = [
-        ['board-list', 200],
+        ['board-copy', 200],
         ['board-loop-copy', 1_700],
       ];
       for (const [id, offsetTop] of offsets) {

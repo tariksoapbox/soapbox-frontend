@@ -90,6 +90,119 @@ export function PublicBoard({
     });
   }, [autoScroll, loop, speed, speedUp, delayFromStart, delayAtEnd]);
 
+  // Everything the board draws, held once so the endless mode can render it
+  // twice without a second copy of this JSX drifting from the first.
+  const boardContent = (
+    <>
+      <Box
+        data-testid="board-header"
+        sx={{
+          mb: { xs: 3, md: 5 },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 3,
+        }}
+      >
+        <Box>
+          <Typography
+            component="h1"
+            sx={{
+              fontFamily: boardDisplayFont,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              // Futura Condensed carries a larger size in the same width, and
+              // wants tracking opened rather than tightened.
+              fontSize: { xs: 40, md: 64 },
+              letterSpacing: '.01em',
+              lineHeight: 0.95,
+            }}
+          >
+            {copy.title}
+          </Typography>
+          <Typography
+            sx={{
+              mt: 1,
+              color: 'text.secondary',
+              letterSpacing: '.2em',
+              textTransform: 'uppercase',
+              fontSize: 12,
+            }}
+          >
+            {copy.subtitle}
+          </Typography>
+        </Box>
+
+        {/* The event's own mark, opposite its own standings. Sized by
+            height so the two variants share one asset — it has a transparent
+            ground and reads on the navy and on the white alike. */}
+        <Box
+          component={Image}
+          src={logo}
+          alt={copy.logoAlt}
+          // The asset's own pixels, for the aspect ratio; CSS below decides
+          // how big it actually draws. Stated rather than taken from the
+          // import because the test renderer has no Next image loader.
+          width={634}
+          height={600}
+          priority
+          sx={{
+            height: { xs: 56, md: 104 },
+            width: 'auto',
+            display: 'block',
+            // The title wraps before the mark gives up any size.
+            flexShrink: 0,
+          }}
+        />
+      </Box>
+
+      {isPending && !data ? (
+        <Box
+          sx={{ py: 10, display: 'grid', placeItems: 'center' }}
+          role="status"
+          aria-live="polite"
+        >
+          {/* No caption: the spinner says it, and a line of text that only
+              exists for a second is one more thing on a board that should
+              only ever show standings. It carries the wording as its label
+              so a screen reader still gets it. */}
+          <CircularProgress
+            color="primary"
+            aria-label={copy.waiting}
+            size={64}
+            thickness={3}
+            sx={{ width: { xs: 48, md: 64 }, height: { xs: 48, md: 64 } }}
+          />
+        </Box>
+      ) : (
+        <Stack spacing={{ xs: 1.25, md: 1.75 }}>
+          {data?.teams.map((team, i) => (
+            <BoardRow key={team.id} team={team} index={i} />
+          ))}
+        </Stack>
+      )}
+
+      {data?.teams.length === 0 && (
+        <Typography sx={{ py: 8, textAlign: 'center', color: 'text.secondary' }}>
+          {copy.empty}
+        </Typography>
+      )}
+
+      {/* A poll that fails keeps the last board on screen; the note is the
+          only signal that it is no longer moving. */}
+      {error && data && (
+        <Typography sx={{ mt: 3, textAlign: 'center', color: 'text.secondary' }} role="status">
+          {copy.offline}
+        </Typography>
+      )}
+      {error && !data && (
+        <Typography sx={{ py: 8, textAlign: 'center', color: 'error.main' }} role="alert">
+          {copy.offline}
+        </Typography>
+      )}
+    </>
+  );
+
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
       {/* CssBaseline styles the document from the console's theme — navy
@@ -123,128 +236,19 @@ export function PublicBoard({
         }}
       >
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>
-          <Box
-            data-testid="board-header"
-            sx={{
-              mb: { xs: 3, md: 5 },
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 3,
-            }}
-          >
-            <Box>
-              <Typography
-                component="h1"
-                sx={{
-                  fontFamily: boardDisplayFont,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  // Futura Condensed carries a larger size in the same width, and
-                  // wants tracking opened rather than tightened.
-                  fontSize: { xs: 40, md: 64 },
-                  letterSpacing: '.01em',
-                  lineHeight: 0.95,
-                }}
-              >
-                {copy.title}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 1,
-                  color: 'text.secondary',
-                  letterSpacing: '.2em',
-                  textTransform: 'uppercase',
-                  fontSize: 12,
-                }}
-              >
-                {copy.subtitle}
-              </Typography>
-            </Box>
-
-            {/* The event's own mark, opposite its own standings. Sized by
-              height so the two variants share one asset — it has a transparent
-              ground and reads on the navy and on the white alike. */}
-            <Box
-              component={Image}
-              src={logo}
-              alt={copy.logoAlt}
-              // The asset's own pixels, for the aspect ratio; CSS below decides
-              // how big it actually draws. Stated rather than taken from the
-              // import because the test renderer has no Next image loader.
-              width={634}
-              height={600}
-              priority
-              sx={{
-                height: { xs: 56, md: 104 },
-                width: 'auto',
-                display: 'block',
-                // The title wraps before the mark gives up any size.
-                flexShrink: 0,
-              }}
-            />
+          <Box ref={firstCopy} data-testid="board-copy">
+            {boardContent}
           </Box>
 
-          {isPending && !data ? (
-            <Box
-              sx={{ py: 10, display: 'grid', placeItems: 'center' }}
-              role="status"
-              aria-live="polite"
-            >
-              {/* No caption: the spinner says it, and a line of text that only
-                exists for a second is one more thing on a board that should
-                only ever show standings. It carries the wording as its label
-                so a screen reader still gets it. */}
-              <CircularProgress
-                color="primary"
-                aria-label={copy.waiting}
-                size={64}
-                thickness={3}
-                sx={{ width: { xs: 48, md: 64 }, height: { xs: 48, md: 64 } }}
-              />
+          {/* The second copy is what the scroll runs into. Stopping exactly at
+            its top puts it where the first one started, so resetting to zero
+            from there is invisible — the board appears to begin again rather
+            than jump back. Hidden from assistive tech, which should hear the
+            standings once however many times they are drawn. */}
+          {loop && data && (
+            <Box ref={secondCopy} aria-hidden data-testid="board-loop-copy">
+              {boardContent}
             </Box>
-          ) : (
-            <Stack spacing={{ xs: 1.25, md: 1.75 }}>
-              <Box ref={firstCopy} data-testid="board-list">
-                <Stack spacing={{ xs: 1.25, md: 1.75 }}>
-                  {data?.teams.map((team, i) => (
-                    <BoardRow key={team.id} team={team} index={i} />
-                  ))}
-                </Stack>
-              </Box>
-              {/* The second copy exists only to be scrolled into: wrapping by
-                the distance between the two puts this one exactly where the
-                first began, which is what makes the loop seamless. Hidden from
-                assistive tech, which should hear the standings once. */}
-              {loop && (
-                <Box ref={secondCopy} aria-hidden data-testid="board-loop-copy">
-                  <Stack spacing={{ xs: 1.25, md: 1.75 }}>
-                    {data?.teams.map((team, i) => (
-                      <BoardRow key={team.id} team={team} index={i} />
-                    ))}
-                  </Stack>
-                </Box>
-              )}
-            </Stack>
-          )}
-
-          {data?.teams.length === 0 && (
-            <Typography sx={{ py: 8, textAlign: 'center', color: 'text.secondary' }}>
-              {copy.empty}
-            </Typography>
-          )}
-
-          {/* A poll that fails keeps the last board on screen; the note is the
-            only signal that it is no longer moving. */}
-          {error && data && (
-            <Typography sx={{ mt: 3, textAlign: 'center', color: 'text.secondary' }} role="status">
-              {copy.offline}
-            </Typography>
-          )}
-          {error && !data && (
-            <Typography sx={{ py: 8, textAlign: 'center', color: 'error.main' }} role="alert">
-              {copy.offline}
-            </Typography>
           )}
         </Container>
       </Box>
