@@ -73,4 +73,25 @@ describe('BoardRow', () => {
     renderWithProviders(<BoardRow team={publicTeam({ bibNumber: null })} index={0} />);
     expect(screen.queryByText(/^#/)).not.toBeInTheDocument();
   });
+
+  it('wears a different medal for each of the top three', () => {
+    const badgeOf = (rank: number) => {
+      const { unmount } = renderWithProviders(<BoardRow team={publicTeam({ rank })} index={0} />);
+      const fill = getComputedStyle(screen.getByTestId('board-place')).backgroundColor;
+      unmount();
+      return fill;
+    };
+
+    const [gold, silver, bronze] = [badgeOf(1), badgeOf(2), badgeOf(3)];
+    expect(new Set([gold, silver, bronze]).size).toBe(3);
+    // Gold, specifically — not the brand red the podium used to wear.
+    expect(gold).toBe('rgb(255, 201, 6)');
+  });
+
+  it('leaves fourth place and below unmedalled', () => {
+    renderWithProviders(<BoardRow team={publicTeam({ rank: 4 })} index={0} />);
+    // The ordinary elevated surface, not a medal.
+    const badge = screen.getByTestId('board-place');
+    expect(getComputedStyle(badge).backgroundColor).not.toBe('rgb(255, 201, 6)');
+  });
 });

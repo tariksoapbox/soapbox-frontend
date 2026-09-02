@@ -39,8 +39,23 @@ interface BrandPalette {
    *  swap rather than a second set of components. */
   boardRowBg: string;
   boardRowBorder: string;
-  boardPodiumBg: string;
-  boardPodiumBorder: string;
+  /** First, second and third — by medal, in both variants. */
+  podium: [PodiumTone, PodiumTone, PodiumTone];
+}
+
+/** One place on the podium, everywhere it is drawn. */
+export interface PodiumTone {
+  /** The place badge's fill. Bright in both variants — it is its own surface. */
+  fill: string;
+  /** Ink on that fill. Navy on every medal: 8.6:1 at worst. */
+  ink: string;
+  /** The medal as text — the row's total, and its edge accent. Needs to read
+   *  on the row beneath it, which is why the two variants differ here. */
+  text: string;
+  /** The row's tint. */
+  wash: string;
+  /** The row's border, and the badge's. */
+  edge: string;
 }
 
 declare module '@mui/material/styles' {
@@ -125,8 +140,32 @@ const baseOptions: ThemeOptions = {
       pending: '#6E7BB0',
       boardRowBg: 'rgba(255,255,255,0.025)',
       boardRowBorder: 'rgba(255,255,255,0.07)',
-      boardPodiumBg: 'rgba(219,10,64,0.10)',
-      boardPodiumBorder: 'rgba(219,10,64,0.45)',
+      // The medals carry the top three. Red is the event's colour, not first
+      // place's — and using it for the podium made second and third look like
+      // they had won something too.
+      podium: [
+        {
+          fill: '#FFC906',
+          ink: NAVY,
+          text: '#FFC906',
+          wash: 'rgba(255,201,6,0.10)',
+          edge: 'rgba(255,201,6,0.55)',
+        },
+        {
+          fill: '#C0C6E0',
+          ink: NAVY,
+          text: '#C0C6E0',
+          wash: 'rgba(192,198,224,0.09)',
+          edge: 'rgba(192,198,224,0.45)',
+        },
+        {
+          fill: '#E0A96D',
+          ink: NAVY,
+          text: '#E0A96D',
+          wash: 'rgba(224,169,109,0.09)',
+          edge: 'rgba(224,169,109,0.45)',
+        },
+      ],
     },
   },
   shape: { borderRadius: 14 },
@@ -319,10 +358,32 @@ export const lightBoardTheme = createTheme({
       pending: '#767FA3',
       boardRowBg: WHITE,
       boardRowBorder: '#E6EAF2',
-      // 10% red. The one place the board raises its voice, and the podium
-      // total on it (primary.light) still reads 6:1.
-      boardPodiumBg: 'rgba(219,10,64,0.10)',
-      boardPodiumBorder: 'rgba(219,10,64,0.45)',
+      // Same medals, same badges. Only the medal-as-text changes: gold at full
+      // brightness is 1.5:1 on a white row, so the light variant reads the
+      // total in a darkened version of the same colour.
+      podium: [
+        {
+          fill: '#FFC906',
+          ink: NAVY,
+          text: '#8A6A00',
+          wash: 'rgba(255,201,6,0.18)',
+          edge: 'rgba(154,117,0,0.55)',
+        },
+        {
+          fill: '#C0C6E0',
+          ink: NAVY,
+          text: '#5C6480',
+          wash: 'rgba(120,132,170,0.14)',
+          edge: 'rgba(92,100,128,0.45)',
+        },
+        {
+          fill: '#E0A96D',
+          ink: NAVY,
+          text: '#8A5A22',
+          wash: 'rgba(224,169,109,0.20)',
+          edge: 'rgba(138,90,34,0.45)',
+        },
+      ],
     },
   },
 });

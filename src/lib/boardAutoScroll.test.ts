@@ -48,7 +48,7 @@ describe('scrollNumberFromUrl', () => {
   });
 
   it('clamps rather than rejects', () => {
-    // ?brzina=99 is plainly a request to go fast. It goes as fast as the board
+    // ?speedDown=99 is plainly a request to go fast. It goes as fast as the board
     // goes, instead of putting an error in front of a crowd.
     expect(scrollNumberFromUrl('99', 10, speed)).toBe(50);
     expect(scrollNumberFromUrl('0', 10, speed)).toBe(1);
@@ -82,10 +82,10 @@ describe('boardScrollSettingsFromUrl', () => {
   it('reads all four, independently', () => {
     expect(
       boardScrollSettingsFromUrl({
-        brzina: '50',
-        brzinaGore: '4',
-        pauzaNaVrhu: '3',
-        pauzaNaDnu: '15',
+        speedDown: '50',
+        speedUp: '4',
+        delayAtTop: '3',
+        delayAtBottom: '15',
       }),
     ).toEqual({ speed: 50, speedUp: 4, delayFromStart: 3, delayAtEnd: 15 });
   });
@@ -93,29 +93,39 @@ describe('boardScrollSettingsFromUrl', () => {
   it('lets the return follow the descent unless it is asked for separately', () => {
     // One number is what an operator usually wants to turn. A board that came
     // back at a pace unrelated to the one it just set would read as a glitch.
-    expect(boardScrollSettingsFromUrl({ brzina: '30' })).toMatchObject({
+    expect(boardScrollSettingsFromUrl({ speedDown: '30' })).toMatchObject({
       speed: 30,
       speedUp: 30,
     });
-    expect(boardScrollSettingsFromUrl({ brzina: '30', brzinaGore: '5' })).toMatchObject({
+    expect(boardScrollSettingsFromUrl({ speedDown: '30', speedUp: '5' })).toMatchObject({
       speed: 30,
       speedUp: 5,
     });
   });
 
   it('leaves the others alone when only one is given', () => {
-    expect(boardScrollSettingsFromUrl({ pauzaNaDnu: '2' })).toEqual({
+    expect(boardScrollSettingsFromUrl({ delayAtBottom: '2' })).toEqual({
       ...SCROLL_DEFAULTS,
       delayAtEnd: 2,
     });
   });
 
-  it('reads Bosnian keys only — the URL is for the people running the race', () => {
-    // The English names were live for a matter of minutes; nobody holds a link
-    // with them, and two spellings for one knob is a support problem.
+  it('reads the URL names, not the names the code uses for them', () => {
+    // `speed` and `delayFromStart` are what the settings are called inside the
+    // app. The URL says speedDown and delayAtTop, and only those.
     expect(
       boardScrollSettingsFromUrl({ speed: '20', delayFromStart: '2', delayAtEnd: '2' }),
     ).toEqual(SCROLL_DEFAULTS);
+  });
+
+  it('names the two directions as a matching pair', () => {
+    // A lone `speed` beside a `speedUp` leaves an operator guessing which
+    // direction the unqualified one meant.
+    const keys = Object.keys(SCROLL_PARAMS);
+    expect(keys).toContain('speedDown');
+    expect(keys).toContain('speedUp');
+    expect(keys).toContain('delayAtTop');
+    expect(keys).toContain('delayAtBottom');
   });
 
   it('names every setting exactly once', () => {

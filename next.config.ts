@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${backendOrigin}/:path*` }];
   },
+
+  async redirects() {
+    // The board used to live at /uzivo. A screen at a venue may still be
+    // pointed there, and a dead scoreboard in front of a crowd is not the
+    // place to discover a rename. Query strings carry over untouched.
+    return [{ source: '/uzivo', destination: '/live', permanent: true }];
+  },
 };
 
 export default nextConfig;

@@ -105,4 +105,54 @@ describe('the two board palettes', () => {
       );
     });
   });
+
+  describe('the podium', () => {
+    const MEDALS = ['gold', 'silver', 'bronze'] as const;
+
+    it('gives first, second and third a medal each, in both variants', () => {
+      for (const t of [darkBoardTheme, lightBoardTheme]) {
+        expect(t.palette.brand.podium).toHaveLength(3);
+        const fills = t.palette.brand.podium.map((p) => p.fill);
+        expect(new Set(fills).size).toBe(3);
+      }
+    });
+
+    it('keeps red out of the top three', () => {
+      // Red is the event's colour, not first place's. Using it for the podium
+      // made second and third look like they had won something too.
+      for (const t of [darkBoardTheme, lightBoardTheme]) {
+        for (const tone of t.palette.brand.podium) {
+          for (const value of Object.values(tone)) {
+            expect(value.toLowerCase()).not.toContain('db0a40');
+            expect(value).not.toContain('219,10,64');
+          }
+        }
+      }
+    });
+
+    it('keeps the place number readable on its medal', () => {
+      // The badge is its own surface, so both variants can wear the bright
+      // medal — it is the ink on it that has to hold up.
+      for (const t of [darkBoardTheme, lightBoardTheme]) {
+        t.palette.brand.podium.forEach((tone, i) => {
+          const ratio = contrast(tone.ink, tone.fill);
+          expect(ratio, `${MEDALS[i]} number on its badge`).toBeGreaterThan(4.5);
+        });
+      }
+    });
+
+    it('keeps the total readable on the row the medal tints', () => {
+      // Gold at full brightness is 1.5:1 on a white row, which is why the two
+      // variants differ here and the badge fill does not.
+      const grounds = [
+        [darkBoardTheme, darkBoardTheme.palette.background.default],
+        [lightBoardTheme, lightBoardTheme.palette.brand.boardRowBg],
+      ] as const;
+      for (const [t, ground] of grounds) {
+        t.palette.brand.podium.forEach((tone, i) => {
+          expect(contrast(tone.text, ground), `${MEDALS[i]} total`).toBeGreaterThan(4.5);
+        });
+      }
+    });
+  });
 });

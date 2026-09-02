@@ -14,29 +14,29 @@ import { common } from '@/content/common';
  * The variant is in the URL rather than a toggle, so a screen can be pointed at
  * one and left alone:
  *
- *   /uzivo                  dark  (default)
- *   /uzivo?tema=svijetla    white
- *   /uzivo?tema=tamna       dark, stated explicitly
+ *   /live                dark  (default)
+ *   /live?theme=light    white
+ *   /live?theme=dark     dark, stated explicitly
  *
- * `?vrti` adds the unattended scroll cycle, so an operator can point one screen
- * at a self-scrolling board and another at a still one from the same app. The
- * two combine: /uzivo?tema=svijetla&vrti
+ * `?upAndDown` adds the unattended scroll cycle, so an operator can point one
+ * screen at a self-scrolling board and another at a still one from the same
+ * app. The two combine: /live?theme=light&upAndDown
  *
  * The cycle takes four numbers, all on a 1–20 scale and all clamped into it:
  *
- *   brzina=10        pace of the descent (1 crawls, 20 runs)
- *   brzinaGore=10    pace of the trip back up
- *   pauzaNaVrhu=10   seconds at the top before setting off
- *   pauzaNaDnu=5     seconds at the bottom before coming back
+ *   speedDown=10      pace going down the list (1 crawls, 50 runs)
+ *   speedUp=10        pace coming back up; follows speedDown if omitted
+ *   delayAtTop=10     seconds at the top before setting off
+ *   delayAtBottom=5   seconds at the bottom before coming back
  *
  * Results arrive over a socket, so the board moves the moment an admin saves a
  * mark. The origin is read here, on the server, from the same BACKEND_ORIGIN
  * the /api rewrite uses — no second variable to set, and nothing to configure
  * on a venue screen.
  *
- * `?ukrug` replaces the there-and-back with an endless crawl: the standings run
+ * `?loop` replaces the there-and-back with an endless run: the standings carry
  * on and start again underneath themselves, never turning around. It implies
- * `?vrti`, and pauzaNaDnu and brzinaGore have nothing to describe in that mode.
+ * `?upAndDown`, and delayAtBottom and speedUp have nothing to describe there.
  */
 export const metadata: Metadata = {
   title: `${board.title} — ${common.appName}`,
@@ -49,11 +49,11 @@ export default async function LiveBoardPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const loop = loopFromUrl(params.ukrug);
+  const loop = loopFromUrl(params.loop);
   return (
     <PublicBoard
-      variant={boardVariantFromUrl(params.tema)}
-      autoScroll={autoScrollFromUrl(params.vrti) || loop}
+      variant={boardVariantFromUrl(params.theme)}
+      autoScroll={autoScrollFromUrl(params.upAndDown) || loop}
       loop={loop}
       scrollSettings={boardScrollSettingsFromUrl(params)}
       liveOrigin={resolveBackendOrigin(process.env.BACKEND_ORIGIN)}

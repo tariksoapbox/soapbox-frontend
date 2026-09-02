@@ -1,8 +1,8 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { board as copy } from '@/content/standings';
-import { boardDisplayFont } from '@/theme';
+import { boardDisplayFont, type PodiumTone } from '@/theme';
 import type { PublicTeam } from '@/schemas/contracts';
 
 /**
@@ -18,7 +18,10 @@ import type { PublicTeam } from '@/schemas/contracts';
  * without replaying the entrance.
  */
 export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
-  const podium = team.rank !== null && team.rank <= 3;
+  // Gold, silver, bronze — the medal is the rank, so it is looked up by it.
+  const theme = useTheme();
+  const medal =
+    team.rank !== null && team.rank <= 3 ? theme.palette.brand.podium[team.rank - 1] : undefined;
 
   return (
     <Box
@@ -49,14 +52,14 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
           borderRadius: 2,
           // Tokens, not literals: the light variant is a palette swap, so a
           // hard-coded white here would be invisible on a white page.
-          bgcolor: podium ? 'brand.boardPodiumBg' : 'brand.boardRowBg',
+          bgcolor: medal?.wash ?? 'brand.boardRowBg',
           border: 1,
-          borderColor: podium ? 'brand.boardPodiumBorder' : 'brand.boardRowBorder',
+          borderColor: medal?.edge ?? 'brand.boardRowBorder',
           position: 'relative',
           overflow: 'hidden',
           // One red edge on the leaders — the single flourish, and it marks
           // something the number already says.
-          '&::before': podium
+          '&::before': medal
             ? {
                 content: '""',
                 position: 'absolute',
@@ -64,12 +67,12 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
                 top: 0,
                 bottom: 0,
                 width: 3,
-                bgcolor: 'primary.main',
+                bgcolor: medal.fill,
               }
             : undefined,
         }}
       >
-        <Position rank={team.rank} podium={podium} />
+        <Position rank={team.rank} medal={medal} />
 
         <Box sx={{ minWidth: 0 }}>
           <Typography
@@ -110,7 +113,7 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
               fontWeight: 700,
               fontSize: { xs: 30, md: 46 },
               lineHeight: 1,
-              color: podium ? 'primary.light' : 'text.primary',
+              color: medal?.text ?? 'text.primary',
             }}
           >
             {team.placementSum ?? copy.noTime}
@@ -128,18 +131,19 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
 }
 
 /** The placing badge. Colour follows the number; it never replaces it. */
-function Position({ rank, podium }: { rank: number | null; podium: boolean }) {
+function Position({ rank, medal }: { rank: number | null; medal: PodiumTone | undefined }) {
   return (
     <Box
+      data-testid="board-place"
       sx={{
         width: { xs: 48, md: 62 },
         height: { xs: 48, md: 62 },
         display: 'grid',
         placeItems: 'center',
         borderRadius: 1.5,
-        bgcolor: podium ? 'primary.main' : 'brand.elevated',
+        bgcolor: medal?.fill ?? 'brand.elevated',
         border: 1,
-        borderColor: podium ? 'primary.main' : 'divider',
+        borderColor: medal?.edge ?? 'divider',
       }}
     >
       <Typography
@@ -149,7 +153,7 @@ function Position({ rank, podium }: { rank: number | null; podium: boolean }) {
           fontWeight: 700,
           fontSize: { xs: 24, md: 32 },
           lineHeight: 1,
-          color: podium ? 'primary.contrastText' : 'text.secondary',
+          color: medal?.ink ?? 'text.secondary',
         }}
       >
         {rank ?? '–'}

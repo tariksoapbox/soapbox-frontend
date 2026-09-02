@@ -22,7 +22,7 @@ export function autoScrollFromUrl(value: string | string[] | undefined): boolean
 
 /**
  * Whether the board should run endlessly rather than turning around at the
- * bottom. `?ukrug` implies `?vrti` — asking for a loop is asking it to move.
+ * bottom. `?loop` implies `?upAndDown` — asking for a loop is asking it to move.
  */
 export function loopFromUrl(value: string | string[] | undefined): boolean {
   return autoScrollFromUrl(value);
@@ -33,7 +33,7 @@ export function loopFromUrl(value: string | string[] | undefined): boolean {
  *
  * Clamped rather than rejected, and falling back rather than erroring: a
  * mistyped number on a venue display should move the board a bit less well, not
- * put an error page in front of a crowd. `brzina=99` is plainly a request to go
+ * put an error page in front of a crowd. `speedDown=99` is plainly a request to go
  * fast, so it goes as fast as the board goes.
  */
 export function scrollNumberFromUrl(
@@ -42,7 +42,7 @@ export function scrollNumberFromUrl(
   range: { min: number; max: number },
 ): number {
   const raw = (Array.isArray(value) ? value[0] : value)?.trim();
-  // `?brzina=` with nothing after it is an unfinished edit, not a request for
+  // `?speedDown=` with nothing after it is an unfinished edit, not a request for
   // zero — and Number('') is 0, which would otherwise clamp to the minimum.
   if (!raw) return fallback;
   const parsed = Number(raw);
@@ -51,40 +51,42 @@ export function scrollNumberFromUrl(
 }
 
 /**
- * The URL keys, in Bosnian — this link is typed and read by the people running
- * the race, and every other parameter on this page (`tema`, `vrti`, `ukrug`) is
- * already in their language. The code behind them stays English, like the rest
- * of the codebase; only what an operator sees is translated.
+ * The URL keys.
+ *
+ * Named in pairs that read as opposites — down/up, top/bottom — so that seeing
+ * one tells you the other exists and what it must be called. A lone `speed`
+ * alongside a `speedUp` would leave an operator guessing which direction the
+ * unqualified one meant.
  */
 export const SCROLL_PARAMS = {
-  /** Descent pace. */
-  brzina: 'speed',
-  /** Pace of the trip back up. Follows `brzina` if it is not given. */
-  brzinaGore: 'speedUp',
+  /** Pace going down the list. */
+  speedDown: 'speed',
+  /** Pace coming back up. Follows `speedDown` if it is not given. */
+  speedUp: 'speedUp',
   /** Seconds held at the top. */
-  pauzaNaVrhu: 'delayFromStart',
+  delayAtTop: 'delayFromStart',
   /** Seconds held at the bottom. */
-  pauzaNaDnu: 'delayAtEnd',
+  delayAtBottom: 'delayAtEnd',
 } as const satisfies Record<string, keyof BoardScrollSettings>;
 
 /** All four knobs at once, defaulted and clamped. */
 export function boardScrollSettingsFromUrl(
   params: Record<string, string | string[] | undefined>,
 ): BoardScrollSettings {
-  const speed = scrollNumberFromUrl(params.brzina, SCROLL_DEFAULTS.speed, SCROLL_RANGE.speed);
+  const speed = scrollNumberFromUrl(params.speedDown, SCROLL_DEFAULTS.speed, SCROLL_RANGE.speed);
   return {
     speed,
     // The return follows the descent unless it is asked for separately: one
     // number is what an operator usually wants to turn, and a board that came
     // back at a pace unrelated to the one it just set would read as a glitch.
-    speedUp: scrollNumberFromUrl(params.brzinaGore, speed, SCROLL_RANGE.speed),
+    speedUp: scrollNumberFromUrl(params.speedUp, speed, SCROLL_RANGE.speed),
     delayFromStart: scrollNumberFromUrl(
-      params.pauzaNaVrhu,
+      params.delayAtTop,
       SCROLL_DEFAULTS.delayFromStart,
       SCROLL_RANGE.delay,
     ),
     delayAtEnd: scrollNumberFromUrl(
-      params.pauzaNaDnu,
+      params.delayAtBottom,
       SCROLL_DEFAULTS.delayAtEnd,
       SCROLL_RANGE.delay,
     ),
