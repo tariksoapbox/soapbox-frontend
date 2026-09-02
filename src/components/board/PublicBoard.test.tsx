@@ -5,9 +5,9 @@ import { PublicBoard } from './PublicBoard';
 import { publicStandings, publicTeam } from './fixtures';
 import { mockApi, type Routes } from '@/lib/queries/test-server';
 
-function setup(routes: Routes) {
+function setup(routes: Routes, props: React.ComponentProps<typeof PublicBoard> = {}) {
   const api = mockApi(routes);
-  return { api, ...renderWithProviders(<PublicBoard />) };
+  return { api, ...renderWithProviders(<PublicBoard {...props} />) };
 }
 
 beforeEach(() => vi.clearAllMocks());
@@ -99,5 +99,32 @@ describe('PublicBoard', () => {
     renderWithProviders(<PublicBoard fontClassName="rb-book rb-cond" />);
     const heading = await screen.findByRole('heading', { level: 1 });
     expect(heading.closest('.rb-book.rb-cond')).not.toBeNull();
+  });
+
+  it('actually repaints on the light variant, down to the rendered pixels', async () => {
+    // This asserts on computed colour rather than on the theme object, and it
+    // has to: the variant once looked correct in the JS theme while the page
+    // stayed navy, because MUI's `cssVariables` writes the palette to :root and
+    // a nested provider never overrode it. Only the rendered value catches it.
+    const rowColour = async (props: React.ComponentProps<typeof PublicBoard>) => {
+      const { unmount } = setup(
+        // Rank 4: a plain row, so this reads the ordinary surface token
+        // rather than the podium's red wash.
+        { 'GET /public/standings': publicStandings([publicTeam({ rank: 4 })]) },
+        props,
+      );
+      const row = (await screen.findAllByTestId('board-row'))[0].firstElementChild!;
+      const bg = getComputedStyle(row).backgroundColor;
+      unmount();
+      return bg;
+    };
+
+    const dark = await rowColour({ variant: 'dark' });
+    const lightVariant = await rowColour({ variant: 'light' });
+
+    expect(lightVariant).not.toBe(dark);
+    // A white row on a white page, not a translucent white on navy.
+    expect(lightVariant).toBe('rgb(255, 255, 255)');
+    expect(dark).toBe('rgba(255, 255, 255, 0.025)');
   });
 });

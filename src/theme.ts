@@ -1,6 +1,7 @@
 'use client';
 
 import { createTheme, alpha } from '@mui/material/styles';
+import type { ThemeOptions } from '@mui/material/styles';
 
 /**
  * Soapbox theme — the race palette: deep navy, red, white. Poppins throughout
@@ -92,8 +93,12 @@ const RED = '#DB0A40';
 const RED_TEXT = '#FF5277';
 const WHITE = '#FFFFFF';
 
-export const theme = createTheme({
-  cssVariables: true,
+/**
+ * Everything the app theme is made of, minus the palette-as-CSS-variables
+ * switch. The board builds on these same options with a different palette; see
+ * `darkBoardTheme` for why it cannot simply be handed the built theme.
+ */
+const baseOptions: ThemeOptions = {
   palette: {
     mode: 'dark',
     // Red is the action colour. White on it is 5.1:1 — AA for all text.
@@ -246,7 +251,10 @@ export const theme = createTheme({
       defaultProps: { variant: 'outlined' },
     },
   },
-});
+};
+
+/** The judging console. Keeps `cssVariables`, which the whole app is built on. */
+export const theme = createTheme({ cssVariables: true, ...baseOptions });
 
 /**
  * The light scoreboard.
@@ -259,17 +267,32 @@ export const theme = createTheme({
  * Only the palette changes. Every component reads tokens, so nothing else has
  * to know which variant it is rendering into.
  */
+/**
+ * The board themes deliberately do NOT set `cssVariables`.
+ *
+ * With it on, every `sx` colour compiles to `var(--mui-palette-…)` and those
+ * variables are written once, at `:root`, by whichever provider is outermost —
+ * here the app's dark theme in the root layout. A nested `ThemeProvider` then
+ * changes the JS theme object but not the variables the CSS actually reads, so
+ * the light palette resolves back to navy and the variant silently does
+ * nothing. Without the flag these themes emit literal colours, which is what
+ * lets a nested provider mean anything at all.
+ *
+ * They are built from `baseOptions` rather than from the built `theme` for the
+ * same reason: spreading a built theme drags its `vars` and `colorSchemes`
+ * along with it.
+ */
+const boardTypography = { ...baseOptions.typography, fontFamily: BOARD_FONT };
+
 /** The default board: the app's dark palette, re-typeset in Futura. */
 export const darkBoardTheme = createTheme({
-  ...theme,
-  cssVariables: true,
-  typography: { ...theme.typography, fontFamily: BOARD_FONT },
+  ...baseOptions,
+  typography: boardTypography,
 });
 
 export const lightBoardTheme = createTheme({
-  ...theme,
-  cssVariables: true,
-  typography: { ...theme.typography, fontFamily: BOARD_FONT },
+  ...baseOptions,
+  typography: boardTypography,
   palette: {
     mode: 'light',
     // White on this red is 5.1:1, and this red on white is the same — the one

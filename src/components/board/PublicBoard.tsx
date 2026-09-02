@@ -1,6 +1,14 @@
 'use client';
 
-import { Box, CircularProgress, Container, Stack, ThemeProvider, Typography } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Container,
+  GlobalStyles,
+  Stack,
+  ThemeProvider,
+  Typography,
+} from '@mui/material';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
@@ -31,6 +39,15 @@ export function PublicBoard({
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
+      {/* CssBaseline paints the document navy for the console. The board's own
+        Box covers the viewport, but the page behind it still shows on
+        overscroll — visible on a touchscreen, and on the white variant it is a
+        navy flash at the edge of an otherwise white board. */}
+      {light && (
+        <GlobalStyles
+          styles={{ 'html, body': { backgroundColor: '#FFFFFF', colorScheme: 'light' } }}
+        />
+      )}
       <Box
         className={fontClassName}
         sx={{
