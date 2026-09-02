@@ -40,8 +40,10 @@ All UI must follow **`STYLING_GUIDE.md`** and build from the MUI theme (`src/the
 - **A11y:** target WCAG 2.1 AA. Colour is never the only carrier of meaning — the brand IS red,
   so every state also carries a word, an icon or an ARIA attribute. Touch targets on the ballot
   stay ≥ 44px.
-- **No Red Bull logo, wordmark or bull** anywhere. The brand read is the palette plus the
-  typographic wordmark in `src/components/Brand.tsx`.
+- **No Red Bull logo, wordmark or bull in the console.** Its brand read is the palette plus the
+  typographic wordmark in `src/components/Brand.tsx`. The one exception is the public board
+  (`/uzivo`), which carries the event's own supplied logo above the standings — that artwork was
+  provided for this race, and the board is the screen the public sees.
 
 # Code organization
 

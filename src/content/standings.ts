@@ -9,6 +9,7 @@ export const board = {
   time: 'Vrijeme',
   sum: 'Zbir',
   noTime: '—',
+  logoAlt: 'Red Bull Soapbox Race',
 } as const;
 
 export const standings = {

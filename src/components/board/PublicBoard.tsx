@@ -9,7 +9,9 @@ import {
   ThemeProvider,
   Typography,
 } from '@mui/material';
+import Image from 'next/image';
 import { useEffect } from 'react';
+import logo from '@/assets/soapbox-logo.webp';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
@@ -92,6 +94,26 @@ export function PublicBoard({
       >
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>
           <Box sx={{ mb: { xs: 3, md: 5 } }}>
+            {/* The event's own mark, above its own standings. Sized by height
+              so the two variants share one asset — it has a transparent
+              ground and reads on the navy and on the blue alike. */}
+            <Box
+              component={Image}
+              src={logo}
+              alt={copy.logoAlt}
+              // The asset's own pixels, for the aspect ratio; CSS below decides
+              // how big it actually draws. Stated rather than taken from the
+              // import because the test renderer has no Next image loader.
+              width={634}
+              height={600}
+              priority
+              sx={{
+                height: { xs: 64, md: 104 },
+                width: 'auto',
+                mb: { xs: 1.5, md: 2 },
+                display: 'block',
+              }}
+            />
             <Typography
               component="h1"
               sx={{

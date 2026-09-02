@@ -176,4 +176,12 @@ describe('PublicBoard', () => {
     expect(await inkOf({ variant: 'light' })).toBe('rgb(11, 20, 54)');
     expect(await inkOf({ variant: 'dark' })).toBe('rgb(255, 255, 255)');
   });
+
+  it('leads with the event logo, above the title', async () => {
+    setup({ 'GET /public/standings': publicStandings([publicTeam()]) });
+    const logo = await screen.findByAltText('Red Bull Soapbox Race');
+    const heading = screen.getByRole('heading', { level: 1 });
+    // Order matters: the mark introduces the board, it does not caption it.
+    expect(logo.compareDocumentPosition(heading)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
 });
