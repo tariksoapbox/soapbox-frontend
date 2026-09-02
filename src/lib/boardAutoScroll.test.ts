@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   autoScrollFromUrl,
   boardScrollSettingsFromUrl,
+  loopFromUrl,
   scrollNumberFromUrl,
   SCROLL_PARAMS,
 } from './boardAutoScroll';
-import { SCROLL_DEFAULTS } from './boardScroll';
+import { SCROLL_DEFAULTS, SCROLL_RANGE } from './boardScroll';
 
 describe('autoScrollFromUrl', () => {
   it('stays off unless the URL asks', () => {
@@ -34,27 +35,35 @@ describe('autoScrollFromUrl', () => {
 });
 
 describe('scrollNumberFromUrl', () => {
+  const speed = SCROLL_RANGE.speed;
+
   it('falls back when the parameter is absent', () => {
-    expect(scrollNumberFromUrl(undefined, 10)).toBe(10);
+    expect(scrollNumberFromUrl(undefined, 10, speed)).toBe(10);
   });
 
   it('takes a number the operator typed', () => {
-    expect(scrollNumberFromUrl('7', 10)).toBe(7);
-    expect(scrollNumberFromUrl(' 12 ', 10)).toBe(12);
-    expect(scrollNumberFromUrl('7.5', 10)).toBe(7.5);
+    expect(scrollNumberFromUrl('7', 10, speed)).toBe(7);
+    expect(scrollNumberFromUrl(' 12 ', 10, speed)).toBe(12);
+    expect(scrollNumberFromUrl('7.5', 10, speed)).toBe(7.5);
   });
 
   it('clamps rather than rejects', () => {
-    // ?speed=99 is plainly a request to go fast. It goes as fast as the board
+    // ?brzina=99 is plainly a request to go fast. It goes as fast as the board
     // goes, instead of putting an error in front of a crowd.
-    expect(scrollNumberFromUrl('99', 10)).toBe(20);
-    expect(scrollNumberFromUrl('0', 10)).toBe(1);
-    expect(scrollNumberFromUrl('-4', 10)).toBe(1);
+    expect(scrollNumberFromUrl('99', 10, speed)).toBe(50);
+    expect(scrollNumberFromUrl('0', 10, speed)).toBe(1);
+    expect(scrollNumberFromUrl('-4', 10, speed)).toBe(1);
+  });
+
+  it('clamps each parameter to its own range', () => {
+    // A speed of 50 is a fast board; a 50-second pause is a stopped one.
+    expect(scrollNumberFromUrl('50', 10, SCROLL_RANGE.speed)).toBe(50);
+    expect(scrollNumberFromUrl('50', 10, SCROLL_RANGE.delay)).toBe(20);
   });
 
   it('falls back on anything that is not a number', () => {
     for (const junk of ['brzo', '', 'NaN', 'e']) {
-      expect(scrollNumberFromUrl(junk, 10)).toBe(10);
+      expect(scrollNumberFromUrl(junk, 10, speed)).toBe(10);
     }
   });
 });
@@ -73,18 +82,31 @@ describe('boardScrollSettingsFromUrl', () => {
   it('reads all four, independently', () => {
     expect(
       boardScrollSettingsFromUrl({
-        brzina: '20',
+        brzina: '50',
         brzinaGore: '4',
         pauzaNaVrhu: '3',
         pauzaNaDnu: '15',
       }),
-    ).toEqual({ speed: 20, speedUp: 4, delayFromStart: 3, delayAtEnd: 15 });
+    ).toEqual({ speed: 50, speedUp: 4, delayFromStart: 3, delayAtEnd: 15 });
+  });
+
+  it('lets the return follow the descent unless it is asked for separately', () => {
+    // One number is what an operator usually wants to turn. A board that came
+    // back at a pace unrelated to the one it just set would read as a glitch.
+    expect(boardScrollSettingsFromUrl({ brzina: '30' })).toMatchObject({
+      speed: 30,
+      speedUp: 30,
+    });
+    expect(boardScrollSettingsFromUrl({ brzina: '30', brzinaGore: '5' })).toMatchObject({
+      speed: 30,
+      speedUp: 5,
+    });
   });
 
   it('leaves the others alone when only one is given', () => {
-    expect(boardScrollSettingsFromUrl({ brzina: '2' })).toEqual({
+    expect(boardScrollSettingsFromUrl({ pauzaNaDnu: '2' })).toEqual({
       ...SCROLL_DEFAULTS,
-      speed: 2,
+      delayAtEnd: 2,
     });
   });
 
@@ -101,5 +123,20 @@ describe('boardScrollSettingsFromUrl', () => {
     const mapped = Object.values(SCROLL_PARAMS);
     expect(new Set(mapped).size).toBe(mapped.length);
     expect(mapped.sort()).toEqual(Object.keys(SCROLL_DEFAULTS).sort());
+  });
+});
+
+describe('loopFromUrl', () => {
+  it('is off unless the URL asks', () => {
+    expect(loopFromUrl(undefined)).toBe(false);
+  });
+
+  it('reads a bare ?ukrug as yes', () => {
+    expect(loopFromUrl('')).toBe(true);
+    expect(loopFromUrl('da')).toBe(true);
+  });
+
+  it('honours an explicit no', () => {
+    expect(loopFromUrl('ne')).toBe(false);
   });
 });

@@ -17,9 +17,10 @@
  * scale so there is one range to remember rather than three.
  */
 export interface BoardScrollSettings {
-  /** Descent. 1 slowest, 20 fastest. 10 is the pace the board shipped with. */
+  /** Descent. 1 slowest, 50 fastest. 10 is the pace the board shipped with. */
   speed: number;
-  /** The trip back up, same scale. 10 is the 700ms it shipped with. */
+  /** The trip back up. Same scale and same units — it is a pace, not a
+   *  duration — and it follows `speed` unless the URL sets it separately. */
   speedUp: number;
   /** Seconds at the top before setting off. */
   delayFromStart: number;
@@ -27,7 +28,12 @@ export interface BoardScrollSettings {
   delayAtEnd: number;
 }
 
-export const SCROLL_RANGE = { min: 1, max: 20 } as const;
+/** Speeds run further than the delays: 50 is a genuinely fast board, whereas
+ *  a 50-second pause is just a stopped one. */
+export const SCROLL_RANGE = {
+  speed: { min: 1, max: 50 },
+  delay: { min: 1, max: 20 },
+} as const;
 
 export const SCROLL_DEFAULTS: BoardScrollSettings = {
   speed: 10,
@@ -38,7 +44,7 @@ export const SCROLL_DEFAULTS: BoardScrollSettings = {
 
 /**
  * Speed 10 means 90px/s, so the default setting reproduces the pace exactly.
- * The scale is linear from there: 1 crawls at 9px/s, 20 runs at 180px/s.
+ * The scale is linear from there: 1 crawls at 9px/s, 50 runs at 450px/s.
  */
 const PX_PER_SEC_PER_STEP = 9;
 
@@ -46,21 +52,13 @@ const PX_PER_SEC_PER_STEP = 9;
  *  deliberately fast setting on a short board. */
 const MIN_DOWN_MS_AT_DEFAULT_SPEED = 4_000;
 
-/**
- * The return is a duration, not a pace: it is one movement rather than a second
- * reading pass, so it should not get longer just because the board did. Divided
- * by the setting so speed 10 gives the 700ms it shipped with, 20 halves it and
- * 1 stretches it to seven seconds.
- */
-const UP_MS_AT_SPEED_ONE = 7_000;
-
 /** Turns what the URL asked for into what the cycle runs on. */
 export function cycleOptionsFor(settings: BoardScrollSettings): ScrollCycleOptions {
   return {
     holdTopMs: settings.delayFromStart * 1_000,
     holdBottomMs: settings.delayAtEnd * 1_000,
     downPxPerSec: settings.speed * PX_PER_SEC_PER_STEP,
-    upMs: UP_MS_AT_SPEED_ONE / settings.speedUp,
+    upPxPerSec: settings.speedUp * PX_PER_SEC_PER_STEP,
     minDownMs: (MIN_DOWN_MS_AT_DEFAULT_SPEED * SCROLL_DEFAULTS.speed) / settings.speed,
   };
 }
@@ -72,10 +70,22 @@ export interface ScrollCycleOptions {
   holdBottomMs?: number;
   /** Descent speed. Slow: this is being read, not skimmed. */
   downPxPerSec?: number;
-  /** The trip back up. One movement, not a second reading pass. */
-  upMs?: number;
+  /** Pace of the trip back up, in px/s — the same units as the descent. */
+  upPxPerSec?: number;
   /** Floor on the descent, so a barely-scrolling board still eases. */
   minDownMs?: number;
+  /**
+   * Turns the cycle into an endless crawl instead of a there-and-back.
+   *
+   * The caller renders the standings twice and returns the distance between the
+   * two copies' first rows. Scrolling exactly that far puts the second copy
+   * where the first one started, so subtracting it from the scroll position is
+   * invisible — the board appears to run forever without ever coming back up.
+   *
+   * Returns 0 before the copies have laid out; the cycle just keeps scrolling
+   * and picks the wrap up on a later frame.
+   */
+  loopHeight?: () => number;
 }
 
 /** Gentle at both ends: no lurch away from the top, no slam into the bottom. */
@@ -99,8 +109,9 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
     holdTopMs = 10_000,
     holdBottomMs = 5_000,
     downPxPerSec = 90,
-    upMs = 700,
+    upPxPerSec = 90,
     minDownMs = 4_000,
+    loopHeight,
   } = options;
 
   let stopped = false;
@@ -140,6 +151,46 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
     frame = requestAnimationFrame(step);
   };
 
+  /**
+   * Endless mode. Constant velocity, no easing: easing exists to soften a start
+   * and a stop, and this has neither. `holdTopMs` still applies once, so the
+   * leaders can be read before the board sets off; `holdBottomMs` and the
+   * return pace have nothing to describe here and are ignored.
+   */
+  const loop = () => {
+    wait(holdTopMs, () => {
+      // Anyone asking for less motion gets the same tour, a screen at a time,
+      // at the same average pace — rather than continuous travel.
+      if (prefersReducedMotion()) {
+        const advance = () => {
+          window.scrollTo(0, wrapped(window.scrollY + window.innerHeight));
+          wait((window.innerHeight / downPxPerSec) * 1_000, advance);
+        };
+        advance();
+        return;
+      }
+
+      // Tracked rather than read back each frame: scrollY is rounded, and the
+      // error would accumulate over an hour of continuous scrolling.
+      let y = window.scrollY;
+      let last = performance.now();
+      const step = (now: number) => {
+        if (stopped) return;
+        y = wrapped(y + downPxPerSec * ((now - last) / 1_000));
+        last = now;
+        window.scrollTo(0, y);
+        frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    });
+  };
+
+  /** Subtracts one copy of the list once we are past it. */
+  const wrapped = (y: number) => {
+    const height = loopHeight?.() ?? 0;
+    return height > 0 && y >= height ? y - height : y;
+  };
+
   const cycle = () => {
     wait(holdTopMs, () => {
       const distance = scrollableDistance();
@@ -152,13 +203,16 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
       const downMs = Math.max(minDownMs, (distance / downPxPerSec) * 1000);
       animateTo(distance, downMs, () => {
         wait(holdBottomMs, () => {
-          animateTo(0, upMs, cycle);
+          // Measured from where it actually is, so the return is the same
+          // pace whatever the board's length turned out to be.
+          animateTo(0, (window.scrollY / upPxPerSec) * 1_000, cycle);
         });
       });
     });
   };
 
-  cycle();
+  if (loopHeight) loop();
+  else cycle();
 
   return () => {
     stopped = true;

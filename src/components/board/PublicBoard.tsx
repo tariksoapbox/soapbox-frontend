@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import logo from '@/assets/soapbox-logo.webp';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
@@ -37,6 +37,7 @@ export function PublicBoard({
   fontClassName,
   autoScroll = false,
   scrollSettings = SCROLL_DEFAULTS,
+  loop = false,
 }: {
   variant?: 'dark' | 'light';
   /**
@@ -52,19 +53,42 @@ export function PublicBoard({
   autoScroll?: boolean;
   /** Pace and pauses for that cycle. Ignored unless `autoScroll` is on. */
   scrollSettings?: BoardScrollSettings;
+  /**
+   * Run endlessly instead of turning around: the standings are rendered twice
+   * and the scroll wraps between the copies, so the list appears to start again
+   * underneath itself and never comes back up.
+   */
+  loop?: boolean;
 }) {
   const { data, isPending, error } = usePublicBoard();
   const light = variant === 'light';
 
   // Started once, not per render: the cycle owns its own timers and the effect
   // returns the stopper, so nothing keeps scrolling after this unmounts.
+  const firstCopy = useRef<HTMLDivElement>(null);
+  const secondCopy = useRef<HTMLDivElement>(null);
+
   const { speed, speedUp, delayFromStart, delayAtEnd } = scrollSettings;
   useEffect(() => {
     if (!autoScroll) return;
-    // Depending on the three numbers rather than the object: a fresh object
+    // Depending on the four numbers rather than the object: a fresh object
     // every render would restart the cycle every render.
-    return startBoardScrollCycle(cycleOptionsFor({ speed, speedUp, delayFromStart, delayAtEnd }));
-  }, [autoScroll, speed, speedUp, delayFromStart, delayAtEnd]);
+    return startBoardScrollCycle({
+      ...cycleOptionsFor({ speed, speedUp, delayFromStart, delayAtEnd }),
+      // Measured, not computed: the gap between the copies is whatever the
+      // Stack's spacing works out to, and the distance between their tops is
+      // exactly the distance that makes the wrap invisible. Read per frame, so
+      // it is right once they lay out and stays right as rows arrive.
+      ...(loop
+        ? {
+            loopHeight: () =>
+              secondCopy.current && firstCopy.current
+                ? secondCopy.current.offsetTop - firstCopy.current.offsetTop
+                : 0,
+          }
+        : {}),
+    });
+  }, [autoScroll, loop, speed, speedUp, delayFromStart, delayAtEnd]);
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
@@ -181,9 +205,26 @@ export function PublicBoard({
             </Box>
           ) : (
             <Stack spacing={{ xs: 1.25, md: 1.75 }}>
-              {data?.teams.map((team, i) => (
-                <BoardRow key={team.id} team={team} index={i} />
-              ))}
+              <Box ref={firstCopy} data-testid="board-list">
+                <Stack spacing={{ xs: 1.25, md: 1.75 }}>
+                  {data?.teams.map((team, i) => (
+                    <BoardRow key={team.id} team={team} index={i} />
+                  ))}
+                </Stack>
+              </Box>
+              {/* The second copy exists only to be scrolled into: wrapping by
+                the distance between the two puts this one exactly where the
+                first began, which is what makes the loop seamless. Hidden from
+                assistive tech, which should hear the standings once. */}
+              {loop && (
+                <Box ref={secondCopy} aria-hidden data-testid="board-loop-copy">
+                  <Stack spacing={{ xs: 1.25, md: 1.75 }}>
+                    {data?.teams.map((team, i) => (
+                      <BoardRow key={team.id} team={team} index={i} />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
             </Stack>
           )}
 

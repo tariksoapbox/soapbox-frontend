@@ -80,7 +80,9 @@ describe('startBoardScrollCycle', () => {
     expect(scrollY).toBe(2000);
 
     vi.advanceTimersByTime(1);
-    runFrames(100);
+    // The return runs at the descent's pace by default, so it takes the same
+    // twenty-odd seconds rather than the fixed 700ms it used to.
+    runFrames(200, 120);
     expect(scrollY).toBe(0);
 
     stop();
@@ -97,13 +99,13 @@ describe('startBoardScrollCycle', () => {
     stop();
   });
 
-  it('comes back up faster than it went down', () => {
-    const stop = startBoardScrollCycle();
+  it('returns at its own pace, measured from where it actually stopped', () => {
+    const stop = startBoardScrollCycle({ upPxPerSec: 2_000 });
     vi.advanceTimersByTime(10_000);
     runFrames(200, 120);
     vi.advanceTimersByTime(5_000);
 
-    // The whole return trip inside one second; the descent took twenty.
+    // 2000px at 2000px/s is one second, whatever the descent took.
     runFrames(70, 16);
     expect(scrollY).toBe(0);
     stop();
@@ -116,7 +118,7 @@ describe('startBoardScrollCycle', () => {
       runFrames(200, 120);
       expect(scrollY).toBe(2000);
       vi.advanceTimersByTime(5_000);
-      runFrames(100);
+      runFrames(200, 120);
       expect(scrollY).toBe(0);
     }
     stop();
@@ -190,14 +192,14 @@ describe('cycleOptionsFor', () => {
       holdTopMs: 10_000,
       holdBottomMs: 5_000,
       downPxPerSec: 90,
-      upMs: 700,
+      upPxPerSec: 90,
       minDownMs: 4_000,
     });
   });
 
   it('reads the scale linearly at both ends', () => {
     expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 1 }).downPxPerSec).toBe(9);
-    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 20 }).downPxPerSec).toBe(180);
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 50 }).downPxPerSec).toBe(450);
   });
 
   it('turns the delays into milliseconds', () => {
@@ -213,17 +215,112 @@ describe('cycleOptionsFor', () => {
     expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 5 }).minDownMs).toBe(8_000);
   });
 
-  it('scales the return trip without letting it depend on the board length', () => {
-    // A duration, not a pace: coming back is one movement, so it should not get
-    // longer just because more teams have run.
-    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 20 }).upMs).toBe(350);
-    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 1 }).upMs).toBe(7_000);
+  it('measures the return in the same units as the descent', () => {
+    // One scale, one meaning: 15 is the same speed whichever direction it is.
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 50 }).upPxPerSec).toBe(450);
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speedUp: 1 }).upPxPerSec).toBe(9);
   });
 
   it('keeps the two speeds independent', () => {
-    const o = cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 1, speedUp: 20 });
+    const o = cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 1, speedUp: 50 });
     // Crawl down, snap back — a perfectly reasonable thing to ask for.
     expect(o.downPxPerSec).toBe(9);
-    expect(o.upMs).toBe(350);
+    expect(o.upPxPerSec).toBe(450);
+  });
+});
+
+describe('endless mode', () => {
+  // The caller renders the standings twice; this is the distance between the
+  // two copies' first rows, which is what makes the wrap invisible.
+  const LOOP_HEIGHT = 1_500;
+  const endless = (over: Partial<Parameters<typeof startBoardScrollCycle>[0]> = {}) =>
+    startBoardScrollCycle({ loopHeight: () => LOOP_HEIGHT, ...over });
+
+  it('still holds at the top once, so the leaders can be read', () => {
+    const stop = endless();
+    vi.advanceTimersByTime(9_999);
+    runFrames(1);
+    expect(scrollY).toBe(0);
+    stop();
+  });
+
+  it('scrolls at a constant pace — no easing, because there is no stop', () => {
+    const stop = endless({ holdTopMs: 0 });
+    vi.advanceTimersByTime(0);
+    runFrames(1, 1_000);
+    const afterOne = scrollY;
+    runFrames(1, 1_000);
+    const afterTwo = scrollY;
+    // 90px/s, twice, evenly. An eased descent would cover far less in its
+    // first second than its second.
+    expect(afterOne).toBeCloseTo(90, 5);
+    expect(afterTwo - afterOne).toBeCloseTo(90, 5);
+    stop();
+  });
+
+  it('wraps by exactly one copy, so the seam never shows', () => {
+    const stop = endless({ holdTopMs: 0, downPxPerSec: 1_000 });
+    vi.advanceTimersByTime(0);
+    // Past the first copy: 1.6 copies of travel.
+    runFrames(24, 100);
+    // Not 2400 — it wrapped once, landing where the second copy's rows sit
+    // exactly on top of where the first copy's were.
+    expect(scrollY).toBeCloseTo(2_400 - LOOP_HEIGHT, 5);
+    stop();
+  });
+
+  it('never turns around, however long it runs', () => {
+    const PER_FRAME = 100; // 1000px/s at 100ms a frame
+    const stop = endless({ holdTopMs: 0, downPxPerSec: 1_000 });
+    vi.advanceTimersByTime(0);
+    let previous = 0;
+    let wraps = 0;
+    for (let i = 0; i < 60; i += 1) {
+      runFrames(1, PER_FRAME);
+      if (scrollY < previous) {
+        wraps += 1;
+        // The only backwards step allowed is the wrap. It fires on the frame
+        // that crosses the threshold, so the drop is one copy less whatever
+        // that frame travelled — never a gradual scroll back up.
+        expect(previous - scrollY).toBeGreaterThan(LOOP_HEIGHT - PER_FRAME - 1);
+        expect(previous - scrollY).toBeLessThanOrEqual(LOOP_HEIGHT);
+      }
+      previous = scrollY;
+    }
+    expect(wraps).toBeGreaterThan(2);
+    stop();
+  });
+
+  it('keeps scrolling while the copies have not laid out yet', () => {
+    // offsetTop is 0 for both until layout, so loopHeight is 0. That must not
+    // stall the board or divide anything by zero.
+    const stop = startBoardScrollCycle({ holdTopMs: 0, loopHeight: () => 0 });
+    vi.advanceTimersByTime(0);
+    runFrames(5, 100);
+    expect(scrollY).toBeGreaterThan(0);
+    stop();
+  });
+
+  it('advances a screen at a time when the display asks for less motion', () => {
+    window.matchMedia = ((q: string) => ({ matches: true, media: q })) as typeof window.matchMedia;
+    const stop = endless({ holdTopMs: 0, downPxPerSec: 100 });
+    vi.advanceTimersByTime(0);
+    // One viewport (1000px) immediately, then another every 10s — the same
+    // average pace as the smooth version, without the continuous travel.
+    expect(scrollY).toBe(1_000);
+    vi.advanceTimersByTime(10_000);
+    expect(scrollY).toBeCloseTo(2_000 - LOOP_HEIGHT, 5);
+    stop();
+  });
+
+  it('stops dead when told to', () => {
+    const stop = endless({ holdTopMs: 0 });
+    vi.advanceTimersByTime(0);
+    runFrames(3, 100);
+    const abandoned = scrollY;
+    stop();
+    runFrames(50, 100);
+    vi.advanceTimersByTime(60_000);
+    expect(scrollY).toBe(abandoned);
   });
 });

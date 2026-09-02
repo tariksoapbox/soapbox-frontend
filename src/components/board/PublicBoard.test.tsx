@@ -171,7 +171,7 @@ describe('PublicBoard', () => {
         { 'GET /public/standings': publicStandings([publicTeam()]) },
         {
           autoScroll: true,
-          scrollSettings: { speed: 20, speedUp: 20, delayFromStart: 2, delayAtEnd: 15 },
+          scrollSettings: { speed: 20, speedUp: 4, delayFromStart: 2, delayAtEnd: 15 },
         },
       );
       await screen.findByText('Leteći Bosanci');
@@ -180,9 +180,44 @@ describe('PublicBoard', () => {
           holdTopMs: 2_000,
           holdBottomMs: 15_000,
           downPxPerSec: 180,
-          upMs: 350,
+          upPxPerSec: 36,
         }),
       );
+    });
+
+    it('renders the standings once, and does not loop, by default', async () => {
+      setup({ 'GET /public/standings': publicStandings([publicTeam()]) }, { autoScroll: true });
+      await screen.findByText('Leteći Bosanci');
+      expect(screen.queryByTestId('board-loop-copy')).not.toBeInTheDocument();
+      expect(vi.mocked(startBoardScrollCycle).mock.calls[0]?.[0]?.loopHeight).toBeUndefined();
+    });
+
+    it('renders a second copy for the endless mode, hidden from screen readers', async () => {
+      setup(
+        { 'GET /public/standings': publicStandings([publicTeam({ name: 'Prva' })]) },
+        { autoScroll: true, loop: true },
+      );
+      // Two on the page, one in the accessibility tree: the standings are read
+      // out once however many times they are drawn.
+      expect(await screen.findAllByText('Prva')).toHaveLength(2);
+      expect(screen.getByTestId('board-loop-copy')).toHaveAttribute('aria-hidden');
+
+      // And the cycle is given a way to measure the wrap: the distance between
+      // the two copies' tops, which is the only distance that hides the seam.
+      const loopHeight = vi.mocked(startBoardScrollCycle).mock.calls[0]?.[0]?.loopHeight;
+      expect(loopHeight).toBeTypeOf('function');
+
+      const offsets: Array<[string, number]> = [
+        ['board-list', 200],
+        ['board-loop-copy', 1_700],
+      ];
+      for (const [id, offsetTop] of offsets) {
+        Object.defineProperty(screen.getByTestId(id), 'offsetTop', {
+          value: offsetTop,
+          configurable: true,
+        });
+      }
+      expect(loopHeight?.()).toBe(1_500);
     });
   });
 
