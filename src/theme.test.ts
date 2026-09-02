@@ -22,9 +22,7 @@ function contrast(a: string, b: string): number {
 describe('the two board palettes', () => {
   it('invert the ground while keeping the same red', () => {
     expect(theme.palette.background.default).toBe('#0B1436');
-    // Red Bull Zero's blue, not white — the ground carries the brand on the
-    // light variant, which is why it drops the red wash the dark one has.
-    expect(lightBoardTheme.palette.background.default).toBe('#B8DAFD');
+    expect(lightBoardTheme.palette.background.default).toBe('#FFFFFF');
     // The brand colour is the constant; only what it sits on changes.
     expect(lightBoardTheme.palette.primary.main).toBe(theme.palette.primary.main);
   });
@@ -38,9 +36,9 @@ describe('the two board palettes', () => {
   });
 
   it('give the light variant readable text on both of its surfaces', () => {
-    // Two grounds, not one: the page is blue and the rows are white, and text
-    // lands on both. Checking only the page ground once let a secondary through
-    // that came in at 4.4:1 on the blue.
+    // Two grounds, not one: text lands on the page and on a row, and they are
+    // not always the same colour. Checking only the page ground once let a
+    // secondary through at 4.4:1 on a ground that has since changed again.
     const page = lightBoardTheme.palette.background.default;
     const row = lightBoardTheme.palette.brand.boardRowBg;
     for (const ground of [page, row]) {
@@ -71,12 +69,14 @@ describe('the two board palettes', () => {
   it('gives board rows a surface distinct from the page in both variants', () => {
     // A row that matches the page ground has no edge to read.
     expect(theme.palette.brand.boardRowBg).not.toBe(theme.palette.background.default);
-    expect(lightBoardTheme.palette.brand.boardRowBg).not.toBe(
-      lightBoardTheme.palette.background.default,
-    );
-    expect(lightBoardTheme.palette.brand.boardRowBg).not.toBe(
-      lightBoardTheme.palette.brand.elevated,
-    );
+    // On white the row fill matches the page, so the border is what draws the
+    // edge — it must differ from both, or the rows dissolve into the page.
+    const light = lightBoardTheme.palette;
+    if (light.brand.boardRowBg === light.background.default) {
+      expect(light.brand.boardRowBorder).not.toBe(light.brand.boardRowBg);
+      expect(light.brand.boardRowBorder).not.toBe(light.background.default);
+    }
+    expect(light.brand.boardRowBg).not.toBe(light.brand.elevated);
   });
 
   describe('typefaces', () => {

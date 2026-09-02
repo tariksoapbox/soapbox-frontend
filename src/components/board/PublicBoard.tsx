@@ -80,16 +80,11 @@ export function PublicBoard({
         sx={{
           minHeight: '100dvh',
           bgcolor: 'background.default',
-          // One wash of red off the top, so the dark board reads as branded
-          // without a logo and without decorating the data. The light variant
-          // goes without: its ground is already a brand colour, and red over
-          // blue turns the top of the page mauve.
-          ...(light
-            ? {}
-            : {
-                background: (t: Theme) =>
-                  `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}44 0%, transparent 62%)`,
-              }),
+          // A wash of red off the top. 10% on white — enough that the board is
+          // obviously branded before you read a word of it, short of tinting
+          // the numbers. The dark variant carries more because navy swallows it.
+          background: (t: Theme) =>
+            `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '1A' : '44'} 0%, transparent 62%)`,
         }}
       >
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>

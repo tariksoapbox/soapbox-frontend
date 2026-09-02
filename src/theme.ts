@@ -92,8 +92,6 @@ const NAVY_ELEVATED = '#17244F';
 const RED = '#DB0A40';
 const RED_TEXT = '#FF5277';
 const WHITE = '#FFFFFF';
-/** Red Bull Zero's blue — the light board's ground. */
-const RB_ZERO_BLUE = '#B8DAFD';
 
 /**
  * Everything the app theme is made of, minus the palette-as-CSS-variables
@@ -301,21 +299,18 @@ export const lightBoardTheme = createTheme({
     // colour that needed no adjustment.
     primary: { main: RED, light: '#B00734', dark: '#8E0429', contrastText: WHITE },
     secondary: { main: NAVY, light: '#2A3868', dark: '#05091F', contrastText: WHITE },
-    // Red Bull Zero's light blue, with white rows floating on it. The ground
-    // carries the brand so the rows do not have to.
-    background: { default: RB_ZERO_BLUE, paper: WHITE },
-    // Navy as ink: 12.4:1 on the blue, 18:1 on a white row. The secondary is a
-    // step darker than the console's, which only cleared AA on white and comes
-    // in at 4.4:1 on this ground.
+    background: { default: WHITE, paper: '#F6F8FC' },
+    // Navy as ink: 18:1 on white. The secondary is a step darker than the
+    // console's, which is free contrast on a board read across a room.
     text: { primary: NAVY, secondary: '#4C5679' },
-    divider: '#C9DCF4',
+    divider: '#DFE4F0',
     success: { main: '#137A4E', contrastText: WHITE },
     warning: { main: '#8A6100', contrastText: WHITE },
     error: { main: '#C0261E', contrastText: WHITE },
     info: { main: '#1F5FA8', contrastText: WHITE },
     brand: {
-      elevated: '#DCE8FA',
-      rowHover: '#EDF4FE',
+      elevated: '#EFF2F9',
+      rowHover: '#E7ECF7',
       fieldBorder: '#8B95B8',
       redText: '#B00734',
       gold: '#9A7500',
@@ -323,9 +318,11 @@ export const lightBoardTheme = createTheme({
       bronze: '#8A5A22',
       pending: '#767FA3',
       boardRowBg: WHITE,
-      boardRowBorder: '#C9DCF4',
-      boardPodiumBg: 'rgba(219,10,64,0.07)',
-      boardPodiumBorder: 'rgba(219,10,64,0.40)',
+      boardRowBorder: '#E6EAF2',
+      // 10% red. The one place the board raises its voice, and the podium
+      // total on it (primary.light) still reads 6:1.
+      boardPodiumBg: 'rgba(219,10,64,0.10)',
+      boardPodiumBorder: 'rgba(219,10,64,0.45)',
     },
   },
 });
