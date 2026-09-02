@@ -1,3 +1,20 @@
+export const board = {
+  title: 'Rang lista',
+  subtitle: 'Uživo sa staze',
+  waiting: 'Rezultati se učitavaju…',
+  empty: 'Utrka još nije počela.',
+  offline: 'Nema veze sa serverom. Pokušavamo ponovo…',
+  provisional: 'Privremeno',
+  finalTag: 'Konačno',
+  eventComplete: 'Konačni rezultati',
+  vehicle: 'Vozilo',
+  performance: 'Nastup',
+  time: 'Vrijeme',
+  sum: 'Zbir',
+  noTime: '—',
+  judgesOf: (entered: number, expected: number) => `${entered}/${expected}`,
+} as const;
+
 export const standings = {
   title: 'Rang lista',
   subtitle:

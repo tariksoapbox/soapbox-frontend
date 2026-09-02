@@ -4,6 +4,7 @@ export const queryKeys = {
   judges: ['admin', 'judges'] as const,
   apiKeys: ['admin', 'api-keys'] as const,
   standings: ['standings'] as const,
+  publicBoard: ['public', 'standings'] as const,
   teams: ['teams'] as const,
   users: ['admin', 'users'] as const,
   scoreMatrix: ['admin', 'scores'] as const,

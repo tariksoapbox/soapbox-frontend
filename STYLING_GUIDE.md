@@ -155,6 +155,23 @@ neighbouring header, so two judges' surnames end up touching. Columns headed by 
 opt out: `textTransform: 'none'`, `letterSpacing: 0`, 12px, wrapping, with
 `overflowWrap: 'anywhere'` as the backstop for a name longer than any column could hold.
 
+## The public scoreboard
+
+`/uzivo` is the one page without a sign-in: a screen at the venue, or a link handed to
+spectators. It is read from across a room and photographed, so it is deliberately quieter than
+the console — one accent colour, one animation, big tabular numbers, generous space. Anything
+that competes with the standings is working against them.
+
+**Rows open from their own centre**, not from the left: a `clip-path` inset that starts closed at
+`50% / 50%` and releases to both edges, staggered ~55ms apart and capped at twelve steps so a long
+start list still lands promptly. It reads like something passing the camera rather than a list
+being populated. A `translateX` slide would be the wrong gesture here. The entrance runs once on
+mount — the board polls every few seconds and React keeps the nodes, so refreshes update numbers
+without replaying it — and it is disabled under `prefers-reduced-motion`.
+
+Podium rows get a red tint and a 3px red edge. That is the single flourish, and it marks something
+the placing number already states, so colour is never carrying the meaning alone.
+
 ## Iterating
 
 Change a token in `src/theme.ts` and update this table in the same commit, so the two cannot

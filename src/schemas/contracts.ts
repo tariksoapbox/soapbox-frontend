@@ -100,3 +100,44 @@ export interface ScoreMatrix {
   judges: { id: string; name: string; isActive: boolean }[];
   scores: ScoreEntry[];
 }
+
+/* ----------------------------------------------------- the public board --- */
+
+/**
+ * The payload behind both the keyed `/v1/standings` and the unauthenticated
+ * `/public/standings`. One shape, two audiences — the scoreboard is not a
+ * second source of truth.
+ */
+export interface PublicMark {
+  judgeId: string;
+  points: number;
+}
+
+export interface PublicCriterion {
+  total: number;
+  rank: number | null;
+  /** Judges entered so far, out of `event.judgeCount`. */
+  entered: number;
+  complete: boolean;
+  marks: PublicMark[];
+}
+
+export interface PublicTeam {
+  id: string;
+  name: string;
+  bibNumber: number | null;
+  rank: number | null;
+  /** The three placements added up. Smaller is better; null until settled. */
+  placementSum: number | null;
+  final: boolean;
+  vehicle: PublicCriterion;
+  performance: PublicCriterion;
+  time: { ms: number | null; formatted: string | null; rank: number | null };
+}
+
+export interface PublicStandings {
+  event: { judgeCount: number; teamCount: number; complete: boolean; computedAt: string };
+  criteria: readonly Criterion[];
+  judges: { id: string; name: string }[];
+  teams: PublicTeam[];
+}

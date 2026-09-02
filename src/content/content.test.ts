@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { common, criteria, criteriaShort } from './common';
 import { auth } from './auth';
-import { standings } from './standings';
+import { board, standings } from './standings';
 import { admin } from './admin';
 import { CRITERIA } from '@/schemas/contracts';
 
@@ -26,6 +26,15 @@ describe('copy', () => {
   it('says plainly that judges do not sign in', () => {
     expect(admin.judges.subtitle).toMatch(/ne prijavljuju/);
     expect(admin.users.subtitle).toMatch(/sudije nemaju račun/i);
+  });
+
+  it('gives the public board its own compact copy', () => {
+    // The board is read across a room, so its labels are short where the
+    // console's are explanatory.
+    expect(board.vehicle).toBe('Vozilo');
+    expect(board.judgesOf(3, 5)).toBe('3/5');
+    expect(board.noTime).toBe('—');
+    expect(board.eventComplete).toBe('Konačni rezultati');
   });
 
   it('builds the judge-progress strings', () => {
