@@ -14,6 +14,7 @@ import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
 import { startBoardScrollCycle } from '@/lib/boardScroll';
+import type { Theme } from '@mui/material/styles';
 import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
 
 /**
@@ -54,27 +55,39 @@ export function PublicBoard({
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>
-      {/* CssBaseline paints the document navy for the console. The board's own
-        Box covers the viewport, but the page behind it still shows on
-        overscroll — visible on a touchscreen, and on the white variant it is a
-        navy flash at the edge of an otherwise white board. */}
-      {light && (
-        <GlobalStyles
-          styles={{ 'html, body': { backgroundColor: '#FFFFFF', colorScheme: 'light' } }}
-        />
-      )}
+      {/* CssBaseline styles the document from the console's theme — navy
+        ground, white ink — and it does so through :root CSS variables that a
+        nested provider cannot reach. The board restates both from its own
+        palette, or the white variant renders white text on white and shows a
+        navy edge on overscroll. */}
+      <GlobalStyles
+        styles={(t) => ({
+          'html, body': {
+            backgroundColor: t.palette.background.default,
+            color: t.palette.text.primary,
+            colorScheme: light ? 'light' : 'dark',
+          },
+        })}
+      />
       <Box
+        data-testid="board-root"
+        // Explicit, so everything inside inherits the board's ink rather than
+        // whatever the document happens to be set to.
+        color="text.primary"
         className={fontClassName}
         sx={{
           minHeight: '100dvh',
-          // One wash of red off the top, so the page reads as branded without a
-          // logo and without decorating the data.
           bgcolor: 'background.default',
-          // One wash of red off the top so the page reads as branded without a
-          // logo. Lighter on the white variant, where the same strength would
-          // turn the top of the page pink.
-          background: (t) =>
-            `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '14' : '44'} 0%, transparent 62%)`,
+          // One wash of red off the top, so the dark board reads as branded
+          // without a logo and without decorating the data. The light variant
+          // goes without: its ground is already a brand colour, and red over
+          // blue turns the top of the page mauve.
+          ...(light
+            ? {}
+            : {
+                background: (t: Theme) =>
+                  `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}44 0%, transparent 62%)`,
+              }),
         }}
       >
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, px: { xs: 2, md: 4 } }}>

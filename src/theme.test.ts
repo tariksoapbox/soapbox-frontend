@@ -22,7 +22,9 @@ function contrast(a: string, b: string): number {
 describe('the two board palettes', () => {
   it('invert the ground while keeping the same red', () => {
     expect(theme.palette.background.default).toBe('#0B1436');
-    expect(lightBoardTheme.palette.background.default).toBe('#FFFFFF');
+    // Red Bull Zero's blue, not white — the ground carries the brand on the
+    // light variant, which is why it drops the red wash the dark one has.
+    expect(lightBoardTheme.palette.background.default).toBe('#B8DAFD');
     // The brand colour is the constant; only what it sits on changes.
     expect(lightBoardTheme.palette.primary.main).toBe(theme.palette.primary.main);
   });
@@ -35,12 +37,29 @@ describe('the two board palettes', () => {
     }
   });
 
-  it('give the light variant readable text — the point of having it', () => {
-    const bg = lightBoardTheme.palette.background.default;
-    // Body text and the red both clear AA on white.
-    expect(contrast(lightBoardTheme.palette.text.primary, bg)).toBeGreaterThan(4.5);
-    expect(contrast(lightBoardTheme.palette.text.secondary, bg)).toBeGreaterThan(4.5);
-    expect(contrast(lightBoardTheme.palette.primary.main, bg)).toBeGreaterThan(4.5);
+  it('give the light variant readable text on both of its surfaces', () => {
+    // Two grounds, not one: the page is blue and the rows are white, and text
+    // lands on both. Checking only the page ground once let a secondary through
+    // that came in at 4.4:1 on the blue.
+    const page = lightBoardTheme.palette.background.default;
+    const row = lightBoardTheme.palette.brand.boardRowBg;
+    for (const ground of [page, row]) {
+      expect(contrast(lightBoardTheme.palette.text.primary, ground)).toBeGreaterThan(4.5);
+      expect(contrast(lightBoardTheme.palette.text.secondary, ground)).toBeGreaterThan(4.5);
+    }
+    // Red is read as text only on a row — as the podium's total. On the blue
+    // page it is a fill with white on it, checked separately.
+    expect(contrast(lightBoardTheme.palette.primary.main, row)).toBeGreaterThan(4.5);
+  });
+
+  it('never leaves board text to inherit the console page colour', () => {
+    // The bug this replaced: with `cssVariables` the console writes body colour
+    // to :root, a nested provider cannot override it, and the light board
+    // rendered white text on a white ground. Both variants must state an ink
+    // that contrasts with their own ground.
+    for (const t of [darkBoardTheme, lightBoardTheme]) {
+      expect(contrast(t.palette.text.primary, t.palette.background.default)).toBeGreaterThan(4.5);
+    }
   });
 
   it('keeps white legible on the red badge in both variants', () => {
@@ -52,6 +71,9 @@ describe('the two board palettes', () => {
   it('gives board rows a surface distinct from the page in both variants', () => {
     // A row that matches the page ground has no edge to read.
     expect(theme.palette.brand.boardRowBg).not.toBe(theme.palette.background.default);
+    expect(lightBoardTheme.palette.brand.boardRowBg).not.toBe(
+      lightBoardTheme.palette.background.default,
+    );
     expect(lightBoardTheme.palette.brand.boardRowBg).not.toBe(
       lightBoardTheme.palette.brand.elevated,
     );

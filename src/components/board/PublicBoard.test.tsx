@@ -157,4 +157,23 @@ describe('PublicBoard', () => {
       expect(stop).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('states its own ink rather than inheriting the document colour', async () => {
+    // This is the white-on-white screenshot as a test. CssBaseline sets body
+    // colour from the console's :root variables, which a nested provider cannot
+    // reach, so the board has to declare its own — on the root, where every row
+    // inherits it.
+    const inkOf = async (props: React.ComponentProps<typeof PublicBoard>) => {
+      const { unmount } = setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        props,
+      );
+      const ink = getComputedStyle(await screen.findByTestId('board-root')).color;
+      unmount();
+      return ink;
+    };
+
+    expect(await inkOf({ variant: 'light' })).toBe('rgb(11, 20, 54)');
+    expect(await inkOf({ variant: 'dark' })).toBe('rgb(255, 255, 255)');
+  });
 });
