@@ -15,6 +15,8 @@ import logo from '@/assets/soapbox-logo.webp';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
+import { useLiveStandings } from '@/lib/queries/liveStandings';
+import { useRowChoreography } from './useRowChoreography';
 import {
   cycleOptionsFor,
   startBoardScrollCycle,
@@ -53,6 +55,7 @@ export function PublicBoard({
   autoScroll = false,
   scrollSettings = SCROLL_DEFAULTS,
   loop = false,
+  liveOrigin,
 }: {
   variant?: 'dark' | 'light';
   /**
@@ -69,6 +72,12 @@ export function PublicBoard({
   /** Pace and pauses for that cycle. Ignored unless `autoScroll` is on. */
   scrollSettings?: BoardScrollSettings;
   /**
+   * Where to open the live feed. The API's own origin, handed down by the page
+   * — this connection carries no cookie, so it does not need the `/api` proxy
+   * that exists to keep one first-party. Omitted, the board just polls.
+   */
+  liveOrigin?: string;
+  /**
    * Run endlessly instead of turning around: the standings are rendered twice
    * and the scroll wraps between the copies, so the list appears to start again
    * underneath itself and never comes back up.
@@ -77,6 +86,14 @@ export function PublicBoard({
 }) {
   const { data, isPending, error } = usePublicBoard();
   const light = variant === 'light';
+
+  useLiveStandings(liveOrigin);
+
+  // Rows travel to their new places rather than blinking into a new order.
+  // Rooted at the whole board, so the endless mode's second copy moves with
+  // the first instead of jumping while the visible one slides.
+  const boardRoot = useRef<HTMLDivElement>(null);
+  useRowChoreography(boardRoot, data?.teams);
 
   // Started once, not per render: the cycle owns its own timers and the effect
   // returns the stopper, so nothing keeps scrolling after this unmounts.
@@ -239,6 +256,7 @@ export function PublicBoard({
         })}
       />
       <Box
+        ref={boardRoot}
         data-testid="board-root"
         // Explicit, so everything inside inherits the board's ink rather than
         // whatever the document happens to be set to.

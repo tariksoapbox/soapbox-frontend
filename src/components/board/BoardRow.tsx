@@ -23,6 +23,8 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
   return (
     <Box
       data-testid="board-row"
+      // How the FLIP pass finds this row again after React has re-ordered it.
+      data-team-id={team.id}
       sx={{
         // Staggered so the field arrives as a sequence rather than a block, and
         // capped so a long start list does not keep the last row waiting.

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { PublicBoard } from '@/components/board/PublicBoard';
 import { boardFontClassName } from './fonts';
+import { resolveBackendOrigin } from '@/lib/backendOrigin';
 import { boardVariantFromUrl } from '@/lib/boardVariant';
 import { autoScrollFromUrl, boardScrollSettingsFromUrl, loopFromUrl } from '@/lib/boardAutoScroll';
 import { board } from '@/content/standings';
@@ -28,6 +29,11 @@ import { common } from '@/content/common';
  *   pauzaNaVrhu=10   seconds at the top before setting off
  *   pauzaNaDnu=5     seconds at the bottom before coming back
  *
+ * Results arrive over a socket, so the board moves the moment an admin saves a
+ * mark. The origin is read here, on the server, from the same BACKEND_ORIGIN
+ * the /api rewrite uses — no second variable to set, and nothing to configure
+ * on a venue screen.
+ *
  * `?ukrug` replaces the there-and-back with an endless crawl: the standings run
  * on and start again underneath themselves, never turning around. It implies
  * `?vrti`, and pauzaNaDnu and brzinaGore have nothing to describe in that mode.
@@ -50,6 +56,7 @@ export default async function LiveBoardPage({
       autoScroll={autoScrollFromUrl(params.vrti) || loop}
       loop={loop}
       scrollSettings={boardScrollSettingsFromUrl(params)}
+      liveOrigin={resolveBackendOrigin(process.env.BACKEND_ORIGIN)}
       fontClassName={boardFontClassName}
     />
   );
