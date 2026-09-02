@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import logo from '@/assets/soapbox-logo.webp';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
@@ -80,6 +80,9 @@ export function PublicBoard({
 
   // Started once, not per render: the cycle owns its own timers and the effect
   // returns the stopper, so nothing keeps scrolling after this unmounts.
+  // Bumped when the cycle starts a fresh pass; the wash is keyed on it, so it
+  // remounts and its fade plays again.
+  const [lap, setLap] = useState(0);
   const firstCopy = useRef<HTMLDivElement>(null);
   const secondCopy = useRef<HTMLDivElement>(null);
 
@@ -90,6 +93,7 @@ export function PublicBoard({
     // every render would restart the cycle every render.
     return startBoardScrollCycle({
       ...cycleOptionsFor({ speed, speedUp, delayFromStart, delayAtEnd }),
+      onRestart: () => setLap((n) => n + 1),
       // Measured, not computed: the gap between the copies is whatever the
       // Stack's spacing works out to, and the distance between their tops is
       // exactly the distance that makes the wrap invisible. Read per frame, so
@@ -243,14 +247,40 @@ export function PublicBoard({
         sx={{
           minHeight: '100dvh',
           bgcolor: 'background.default',
-          // A wash of red off the top. 10% on white — enough that the board is
-          // obviously branded before you read a word of it, short of tinting
-          // the numbers. The dark variant carries more because navy swallows it.
-          background: (t: Theme) =>
-            `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '1A' : '44'} 0%, transparent 62%)`,
+          position: 'relative',
         }}
       >
-        <Container maxWidth="lg" sx={{ py: PAGE_PAD_Y, px: { xs: 2, md: 4 } }}>
+        {/* The wash of red off the top. 10% on white — enough that the board
+          reads as branded before you read a word of it, short of tinting the
+          numbers; the dark variant carries more because navy swallows it.
+
+          Its own element, keyed on the lap, so remounting replays the fade:
+          it comes up like something switching on, both on load and each time
+          the board starts a fresh pass. Pinned to the viewport rather than the
+          page, or a looping board — twice as tall — would get twice the wash. */}
+        <Box
+          key={lap}
+          data-testid="board-glow"
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100dvh',
+            pointerEvents: 'none',
+            background: (t: Theme) =>
+              `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '1A' : '44'} 0%, transparent 62%)`,
+            animation: 'boardGlowIn 1400ms ease-out both',
+            '@keyframes boardGlowIn': { from: { opacity: 0 }, to: { opacity: 1 } },
+            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+          }}
+        />
+
+        <Container
+          maxWidth="lg"
+          sx={{ py: PAGE_PAD_Y, px: { xs: 2, md: 4 }, position: 'relative' }}
+        >
           <Box ref={firstCopy} data-testid="board-copy" sx={loop ? { pb: LAP_GAP } : undefined}>
             {boardContent}
           </Box>

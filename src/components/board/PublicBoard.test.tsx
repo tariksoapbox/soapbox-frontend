@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '@/test-utils';
 import { PublicBoard, LAP_GAP, PAGE_PAD_Y } from './PublicBoard';
 import { publicStandings, publicTeam } from './fixtures';
@@ -308,5 +308,32 @@ describe('PublicBoard', () => {
     // The mark on the right: last in the row, and it never shrinks.
     expect(header.lastElementChild).toBe(logo);
     expect(getComputedStyle(logo).flexShrink).toBe('0');
+  });
+  describe('the red wash', () => {
+    it('is decorative, and pinned to the screen rather than the page', async () => {
+      setup({ 'GET /public/standings': publicStandings([publicTeam()]) }, { loop: true });
+      const glow = await screen.findByTestId('board-glow');
+      // A looping board is twice as tall; a wash sized to the page would be
+      // twice as large on it.
+      expect(glow).toHaveAttribute('aria-hidden');
+      expect(glow).toHaveStyle({ height: '100dvh' });
+    });
+
+    it('plays again on each new pass, so it reads as switching on', async () => {
+      setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        { autoScroll: true, loop: true },
+      );
+      await screen.findAllByTestId('board-copy');
+      const before = screen.getByTestId('board-glow');
+
+      const onRestart = vi.mocked(startBoardScrollCycle).mock.calls[0]?.[0]?.onRestart;
+      expect(onRestart).toBeTypeOf('function');
+      act(() => onRestart?.());
+
+      // A different node: the element is keyed on the lap, and remounting is
+      // what replays a CSS animation. Re-styling the same node would not.
+      expect(screen.getByTestId('board-glow')).not.toBe(before);
+    });
   });
 });

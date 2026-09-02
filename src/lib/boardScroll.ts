@@ -75,6 +75,12 @@ export interface ScrollCycleOptions {
   /** Floor on the descent, so a barely-scrolling board still eases. */
   minDownMs?: number;
   /**
+   * Fires when a fresh pass over the standings begins — after the silent reset
+   * in endless mode, and on returning to the top of a there-and-back. The board
+   * uses it to replay the entrance, so a new lap arrives rather than resuming.
+   */
+  onRestart?: () => void;
+  /**
    * Turns the cycle into an endless crawl instead of a there-and-back.
    *
    * The caller renders the whole board twice and returns the distance between
@@ -111,6 +117,7 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
     upPxPerSec = 90,
     minDownMs = 4_000,
     loopHeight,
+    onRestart,
   } = options;
 
   let stopped = false;
@@ -173,6 +180,7 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
       }
       const restart = () => {
         window.scrollTo(0, 0);
+        onRestart?.();
         loop();
       };
       if (prefersReducedMotion()) {
@@ -216,7 +224,10 @@ export function startBoardScrollCycle(options: ScrollCycleOptions = {}): () => v
         wait(holdBottomMs, () => {
           // Measured from where it actually is, so the return is the same
           // pace whatever the board's length turned out to be.
-          animateTo(0, (window.scrollY / upPxPerSec) * 1_000, cycle);
+          animateTo(0, (window.scrollY / upPxPerSec) * 1_000, () => {
+            onRestart?.();
+            cycle();
+          });
         });
       });
     });

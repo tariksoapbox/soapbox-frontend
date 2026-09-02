@@ -111,6 +111,21 @@ describe('startBoardScrollCycle', () => {
     stop();
   });
 
+  it('announces the start of each new pass over the standings', () => {
+    const onRestart = vi.fn();
+    const stop = startBoardScrollCycle({ onRestart, upPxPerSec: 2_000 });
+
+    vi.advanceTimersByTime(10_000);
+    runFrames(200, 120);
+    vi.advanceTimersByTime(5_000);
+    // Reaching the bottom is not a new pass — coming back to the top is.
+    expect(onRestart).not.toHaveBeenCalled();
+
+    runFrames(70, 16);
+    expect(onRestart).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
   it('loops', () => {
     const stop = startBoardScrollCycle();
     for (let lap = 0; lap < 2; lap += 1) {
@@ -321,6 +336,26 @@ describe('endless mode', () => {
     // The next step would pass the end of the lap, so it restarts instead.
     vi.advanceTimersByTime(10_000);
     expect(scrollY).toBe(0);
+    stop();
+  });
+
+  it('announces each fresh pass, so the board can replay its entrance', () => {
+    const onRestart = vi.fn();
+    const stop = endless({ holdTopMs: 0, onRestart });
+
+    vi.advanceTimersByTime(0);
+    runFrames(30, 120);
+    // Mid-lap: nothing has restarted yet.
+    expect(onRestart).not.toHaveBeenCalled();
+
+    runFrames(200, 120);
+    expect(onRestart).toHaveBeenCalledTimes(1);
+
+    // And once per lap after that, not once per frame. The next lap starts on
+    // a timer, so the clock has to move as well as the frames.
+    vi.advanceTimersByTime(0);
+    runFrames(200, 120);
+    expect(onRestart).toHaveBeenCalledTimes(2);
     stop();
   });
 
