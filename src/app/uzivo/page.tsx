@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PublicBoard } from '@/components/board/PublicBoard';
 import { boardFontClassName } from './fonts';
 import { boardVariantFromUrl } from '@/lib/boardVariant';
-import { autoScrollFromUrl } from '@/lib/boardAutoScroll';
+import { autoScrollFromUrl, boardScrollSettingsFromUrl } from '@/lib/boardAutoScroll';
 import { board } from '@/content/standings';
 import { common } from '@/content/common';
 
@@ -20,6 +20,12 @@ import { common } from '@/content/common';
  * `?vrti` adds the unattended scroll cycle, so an operator can point one screen
  * at a self-scrolling board and another at a still one from the same app. The
  * two combine: /uzivo?tema=svijetla&vrti
+ *
+ * The cycle takes three numbers, all on a 1–20 scale and all clamped into it:
+ *
+ *   speed=10           pace of the descent (default; 1 crawls, 20 runs)
+ *   delayFromStart=10  seconds at the top before setting off
+ *   delayAtEnd=5       seconds at the bottom before coming back
  */
 export const metadata: Metadata = {
   title: `${board.title} — ${common.appName}`,
@@ -36,6 +42,7 @@ export default async function LiveBoardPage({
     <PublicBoard
       variant={boardVariantFromUrl(params.tema)}
       autoScroll={autoScrollFromUrl(params.vrti)}
+      scrollSettings={boardScrollSettingsFromUrl(params)}
       fontClassName={boardFontClassName}
     />
   );

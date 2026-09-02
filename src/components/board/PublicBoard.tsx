@@ -15,7 +15,12 @@ import logo from '@/assets/soapbox-logo.webp';
 import { BoardRow } from './BoardRow';
 import { board as copy } from '@/content/standings';
 import { usePublicBoard } from '@/lib/queries/board';
-import { startBoardScrollCycle } from '@/lib/boardScroll';
+import {
+  cycleOptionsFor,
+  startBoardScrollCycle,
+  SCROLL_DEFAULTS,
+  type BoardScrollSettings,
+} from '@/lib/boardScroll';
 import type { Theme } from '@mui/material/styles';
 import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
 
@@ -31,6 +36,7 @@ export function PublicBoard({
   variant = 'dark',
   fontClassName,
   autoScroll = false,
+  scrollSettings = SCROLL_DEFAULTS,
 }: {
   variant?: 'dark' | 'light';
   /**
@@ -44,16 +50,21 @@ export function PublicBoard({
    * standing at. Off by default — see `autoScrollFromUrl`.
    */
   autoScroll?: boolean;
+  /** Pace and pauses for that cycle. Ignored unless `autoScroll` is on. */
+  scrollSettings?: BoardScrollSettings;
 }) {
   const { data, isPending, error } = usePublicBoard();
   const light = variant === 'light';
 
   // Started once, not per render: the cycle owns its own timers and the effect
   // returns the stopper, so nothing keeps scrolling after this unmounts.
+  const { speed, delayFromStart, delayAtEnd } = scrollSettings;
   useEffect(() => {
     if (!autoScroll) return;
-    return startBoardScrollCycle();
-  }, [autoScroll]);
+    // Depending on the three numbers rather than the object: a fresh object
+    // every render would restart the cycle every render.
+    return startBoardScrollCycle(cycleOptionsFor({ speed, delayFromStart, delayAtEnd }));
+  }, [autoScroll, speed, delayFromStart, delayAtEnd]);
 
   return (
     <ThemeProvider theme={light ? lightBoardTheme : darkBoardTheme}>

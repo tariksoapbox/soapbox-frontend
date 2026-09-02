@@ -12,6 +12,47 @@
  * testable without rendering anything.
  */
 
+/**
+ * The three knobs an operator can turn from the URL, all on the same 1–20
+ * scale so there is one range to remember rather than three.
+ */
+export interface BoardScrollSettings {
+  /** 1 slowest, 20 fastest. 10 is the pace the board shipped with. */
+  speed: number;
+  /** Seconds at the top before setting off. */
+  delayFromStart: number;
+  /** Seconds at the bottom before coming back. */
+  delayAtEnd: number;
+}
+
+export const SCROLL_RANGE = { min: 1, max: 20 } as const;
+
+export const SCROLL_DEFAULTS: BoardScrollSettings = {
+  speed: 10,
+  delayFromStart: 10,
+  delayAtEnd: 5,
+};
+
+/**
+ * Speed 10 means 90px/s, so the default setting reproduces the pace exactly.
+ * The scale is linear from there: 1 crawls at 9px/s, 20 runs at 180px/s.
+ */
+const PX_PER_SEC_PER_STEP = 9;
+
+/** The ease floor at the default speed; scaled below so it never fights a
+ *  deliberately fast setting on a short board. */
+const MIN_DOWN_MS_AT_DEFAULT_SPEED = 4_000;
+
+/** Turns what the URL asked for into what the cycle runs on. */
+export function cycleOptionsFor(settings: BoardScrollSettings): ScrollCycleOptions {
+  return {
+    holdTopMs: settings.delayFromStart * 1_000,
+    holdBottomMs: settings.delayAtEnd * 1_000,
+    downPxPerSec: settings.speed * PX_PER_SEC_PER_STEP,
+    minDownMs: (MIN_DOWN_MS_AT_DEFAULT_SPEED * SCROLL_DEFAULTS.speed) / settings.speed,
+  };
+}
+
 export interface ScrollCycleOptions {
   /** Time at the top before setting off — long enough to read the podium. */
   holdTopMs?: number;

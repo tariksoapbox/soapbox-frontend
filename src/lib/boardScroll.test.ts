@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { startBoardScrollCycle } from './boardScroll';
+import { cycleOptionsFor, startBoardScrollCycle, SCROLL_DEFAULTS } from './boardScroll';
 
 /**
  * The cycle is timers plus animation frames, so the clock is faked and frames
@@ -179,5 +179,36 @@ describe('startBoardScrollCycle', () => {
     vi.advanceTimersByTime(60_000);
     runFrames(20);
     expect(scrollY).toBe(0);
+  });
+});
+
+describe('cycleOptionsFor', () => {
+  it('reproduces the shipped pace at the default speed', () => {
+    // The whole point of putting 10 in the middle of the scale: a URL with no
+    // numbers on it behaves exactly as the board did before they existed.
+    expect(cycleOptionsFor(SCROLL_DEFAULTS)).toEqual({
+      holdTopMs: 10_000,
+      holdBottomMs: 5_000,
+      downPxPerSec: 90,
+      minDownMs: 4_000,
+    });
+  });
+
+  it('reads the scale linearly at both ends', () => {
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 1 }).downPxPerSec).toBe(9);
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 20 }).downPxPerSec).toBe(180);
+  });
+
+  it('turns the delays into milliseconds', () => {
+    const o = cycleOptionsFor({ speed: 10, delayFromStart: 3, delayAtEnd: 20 });
+    expect(o.holdTopMs).toBe(3_000);
+    expect(o.holdBottomMs).toBe(20_000);
+  });
+
+  it('does not let the ease floor fight a fast setting', () => {
+    // A short board at speed 20 should be quick. A fixed 4s floor would make it
+    // slower than the same board at speed 10.
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 20 }).minDownMs).toBe(2_000);
+    expect(cycleOptionsFor({ ...SCROLL_DEFAULTS, speed: 5 }).minDownMs).toBe(8_000);
   });
 });

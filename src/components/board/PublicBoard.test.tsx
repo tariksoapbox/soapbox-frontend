@@ -7,8 +7,13 @@ import { mockApi, type Routes } from '@/lib/queries/test-server';
 import { startBoardScrollCycle } from '@/lib/boardScroll';
 
 // The cycle itself is covered in boardScroll.test.ts; here the only question is
-// whether the board arms it, and disarms it again.
-vi.mock('@/lib/boardScroll', () => ({ startBoardScrollCycle: vi.fn(() => vi.fn()) }));
+// whether the board arms it, disarms it again, and hands it the right numbers.
+// Only the starter is stubbed — the settings-to-options mapping stays real, so
+// these tests assert the pace the cycle would actually run at.
+vi.mock('@/lib/boardScroll', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/boardScroll')>()),
+  startBoardScrollCycle: vi.fn(() => vi.fn()),
+}));
 
 function setup(routes: Routes, props: React.ComponentProps<typeof PublicBoard> = {}) {
   const api = mockApi(routes);
@@ -151,10 +156,25 @@ describe('PublicBoard', () => {
       );
       await screen.findByText('Leteći Bosanci');
       expect(startBoardScrollCycle).toHaveBeenCalledTimes(1);
+      // Default pace unless the URL said otherwise.
+      expect(startBoardScrollCycle).toHaveBeenCalledWith(
+        expect.objectContaining({ holdTopMs: 10_000, holdBottomMs: 5_000, downPxPerSec: 90 }),
+      );
 
       // Without this the timers outlive the page and scroll whatever replaced it.
       unmount();
       expect(stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('hands the cycle the pace the URL asked for', async () => {
+      setup(
+        { 'GET /public/standings': publicStandings([publicTeam()]) },
+        { autoScroll: true, scrollSettings: { speed: 20, delayFromStart: 2, delayAtEnd: 15 } },
+      );
+      await screen.findByText('Leteći Bosanci');
+      expect(startBoardScrollCycle).toHaveBeenCalledWith(
+        expect.objectContaining({ holdTopMs: 2_000, holdBottomMs: 15_000, downPxPerSec: 180 }),
+      );
     });
   });
 
