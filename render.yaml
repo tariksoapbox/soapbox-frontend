@@ -10,7 +10,13 @@ services:
   - type: web
     name: soapbox-web
     runtime: node
-    plan: free
+    # MUST match the plan the service is actually on. This service is Blueprint
+    # managed, which makes this file the source of truth for the settings it
+    # declares — a sync overwrites the dashboard, not the other way round. It
+    # said `free` while the service ran on Starter, so the next sync would have
+    # put the audience's screen back onto a plan that sleeps after fifteen idle
+    # minutes.
+    plan: starter
     region: frankfurt
     buildCommand: npm ci --include=dev && npm run build
     # `next start` reads Render's PORT and binds every interface.
