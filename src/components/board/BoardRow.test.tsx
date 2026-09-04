@@ -54,7 +54,7 @@ describe('BoardRow', () => {
           rank: null,
           placementSum: null,
           final: false,
-          time: { ms: null, formatted: null, rank: null },
+          time: { ms: null, formatted: null, rank: null, didNotFinish: false },
         })}
         index={0}
       />,
@@ -93,5 +93,22 @@ describe('BoardRow', () => {
     // The ordinary elevated surface, not a medal.
     const badge = screen.getByTestId('board-place');
     expect(getComputedStyle(badge).backgroundColor).not.toBe('rgb(255, 201, 6)');
+  });
+
+  it('shows DNF on the public board, and still ranks the team', () => {
+    renderWithProviders(
+      <BoardRow
+        team={publicTeam({
+          rank: 12,
+          placementSum: 21,
+          time: { ms: null, formatted: 'DNF', rank: 16, didNotFinish: true },
+        })}
+        index={0}
+      />,
+    );
+    expect(screen.getByText('DNF')).toBeInTheDocument();
+    // A retirement still earns a position on the combined board.
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('21')).toBeInTheDocument();
   });
 });

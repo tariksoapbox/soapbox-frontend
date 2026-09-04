@@ -73,4 +73,25 @@ describe('RunTimeField', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Spremi vrijeme' }));
     expect(await screen.findByText('Vrijeme je predugo (najviše 60 minuta).')).toBeInTheDocument();
   });
+
+  it.each(['DNF', 'dnf', 'NA'])('accepts %s for a team that could not finish', async (marker) => {
+    // NA is what the rulebook writes and DNF is what the board shows, so both
+    // go through rather than the admin having to remember which.
+    const { api } = setup({
+      'PUT /admin/teams/t1/run-time': { team: team({ runTime: 'DNF' }) },
+    });
+    await userEvent.type(field(), marker);
+    await userEvent.click(screen.getByRole('button', { name: 'Spremi vrijeme' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.body).toEqual({ runTime: marker });
+  });
+
+  it('still refuses something that is neither a time nor DNF', async () => {
+    // A mis-parsed time silently reorders the board, so the field says so
+    // before the round trip rather than after it.
+    const { api } = setup({});
+    await userEvent.type(field(), 'brzo');
+    expect(screen.getByRole('button', { name: 'Spremi vrijeme' })).toBeDisabled();
+    expect(api.calls.some((c) => c.method === 'PUT')).toBe(false);
+  });
 });

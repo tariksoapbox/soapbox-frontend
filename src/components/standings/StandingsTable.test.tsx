@@ -36,7 +36,7 @@ describe('StandingsTable', () => {
       <StandingsTable
         data={standingsFixture([
           teamStanding({
-            time: { ms: null, formatted: null, rank: null },
+            time: { ms: null, formatted: null, rank: null, didNotFinish: false },
             placementSum: null,
             overallRank: null,
             final: false,

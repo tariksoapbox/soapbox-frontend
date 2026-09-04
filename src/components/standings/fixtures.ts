@@ -8,7 +8,7 @@ export function teamStanding(overrides: Partial<TeamStanding> = {}): TeamStandin
     bibNumber: 1,
     vehicle: { total: 45, judges: 5, rank: 2, complete: true },
     performance: { total: 43, judges: 5, rank: 2, complete: true },
-    time: { ms: 117_200, formatted: '1:57.20', rank: 1 },
+    time: { ms: 117_200, formatted: '1:57.20', rank: 1, didNotFinish: false },
     placementSum: 5,
     overallRank: 1,
     final: true,

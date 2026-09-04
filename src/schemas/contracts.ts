@@ -37,7 +37,10 @@ export interface Team {
   name: string;
   bibNumber: number | null;
   runTimeMs: number | null;
+  /** What the admin typed, read back — a clock reading or `DNF`. */
   runTime: string | null;
+  /** Could not finish: last on the time leaderboard, not a blank. */
+  didNotFinish?: boolean;
   runTimeSetAt?: string | null;
 }
 
@@ -50,8 +53,10 @@ export interface CriterionStanding {
 
 export interface TimeStanding {
   ms: number | null;
+  /** `m:ss.SS`, `DNF`, or null while nothing has been recorded. */
   formatted: string | null;
   rank: number | null;
+  didNotFinish: boolean;
 }
 
 export interface TeamStanding {
@@ -132,7 +137,7 @@ export interface PublicTeam {
   final: boolean;
   vehicle: PublicCriterion;
   performance: PublicCriterion;
-  time: { ms: number | null; formatted: string | null; rank: number | null };
+  time: { ms: number | null; formatted: string | null; rank: number | null; didNotFinish: boolean };
 }
 
 export interface PublicStandings {

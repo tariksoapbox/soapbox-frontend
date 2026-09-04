@@ -16,7 +16,8 @@ export const admin = {
     bib: 'Startni broj',
     bibOptional: 'Startni broj (opcionalno)',
     runTime: 'Prolazno vrijeme',
-    runTimeHelp: 'Oblik m:ss.SS — npr. 1:57.42. Može i samo sekunde: 117.42.',
+    runTimeHelp:
+      'Oblik m:ss.SS — npr. 1:57.42. Može i samo sekunde: 117.42. DNF ako ekipa nije završila.',
     runTimePlaceholder: '1:57.42',
     saveName: 'Spremi naziv',
     saveTime: 'Spremi vrijeme',

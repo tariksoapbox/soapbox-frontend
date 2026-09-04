@@ -10,7 +10,7 @@ export function publicTeam(overrides: Partial<PublicTeam> = {}): PublicTeam {
     final: true,
     vehicle: { total: 17, rank: 1, entered: 2, complete: true, marks: [] },
     performance: { total: 19, rank: 1, entered: 2, complete: true, marks: [] },
-    time: { ms: 117230, formatted: '1:57.23', rank: 1 },
+    time: { ms: 117230, formatted: '1:57.23', rank: 1, didNotFinish: false },
     ...overrides,
   };
 }

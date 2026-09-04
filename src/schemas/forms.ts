@@ -83,8 +83,11 @@ export const runTimeFormSchema = z.object({
     .string()
     .trim()
     .refine(
-      (v) => /^\d{1,2}:[0-5]\d([.,]\d{1,3})?$/.test(v) || /^\d{1,4}([.,]\d{1,3})?$/.test(v),
-      'Unesite vrijeme u obliku m:ss.SS (npr. 1:57.42) ili u sekundama (npr. 117.42).',
+      (v) =>
+        /^(DNF|NA)$/i.test(v) ||
+        /^\d{1,2}:[0-5]\d([.,]\d{1,3})?$/.test(v) ||
+        /^\d{1,4}([.,]\d{1,3})?$/.test(v),
+      'Unesite vrijeme u obliku m:ss.SS (npr. 1:57.42), sekunde (117.42) ili DNF.',
     ),
 });
 export type RunTimeForm = z.infer<typeof runTimeFormSchema>;
