@@ -1,3 +1,5 @@
+import { BOARD_EASING, BOARD_MOTION_MS } from './boardMotion';
+
 /**
  * FLIP for the scoreboard: rows travel to their new places instead of
  * teleporting.
@@ -13,9 +15,10 @@
  * the exchange paints on top of the winner — which reads exactly backwards.
  */
 
-/** How long a row takes to travel, and the curve it travels on. */
-export const FLIP_MS = 620;
-const FLIP_EASING = 'cubic-bezier(.22,.9,.3,1)';
+/** How long a row takes to travel, and the curve it travels on — the board's,
+ *  not this file's, so a move and a change look like the same board. */
+export const FLIP_MS = BOARD_MOTION_MS;
+const FLIP_EASING = BOARD_EASING;
 
 /** Below this, a row has effectively not moved and is left alone. */
 const MIN_TRAVEL_PX = 1;

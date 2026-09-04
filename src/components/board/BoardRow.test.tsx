@@ -111,4 +111,57 @@ describe('BoardRow', () => {
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('21')).toBeInTheDocument();
   });
+
+  describe('when a row changes without moving', () => {
+    it('says nothing on the first board it is given', () => {
+      renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+      expect(screen.queryByTestId('board-row-change')).not.toBeInTheDocument();
+    });
+
+    it('flashes when a total changes', () => {
+      const { rerender } = renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+      rerender(
+        <BoardRow
+          team={publicTeam({ vehicle: { ...publicTeam().vehicle, total: 42 } })}
+          index={0}
+        />,
+      );
+      // The travel animation says nothing when the order has not changed, so
+      // the row has to say it itself.
+      expect(screen.getByTestId('board-row-change')).toBeInTheDocument();
+    });
+
+    it('flashes again on a second change, rather than only once', () => {
+      const { rerender } = renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+      const at = (total: number) =>
+        rerender(
+          <BoardRow team={publicTeam({ vehicle: { ...publicTeam().vehicle, total } })} index={0} />,
+        );
+
+      at(42);
+      const first = screen.getByTestId('board-row-change');
+      at(43);
+      // A different node: a CSS animation only replays when its element is
+      // replaced, which is why the count is a count and not a flag.
+      expect(screen.getByTestId('board-row-change')).not.toBe(first);
+    });
+
+    it('stays still when the same values arrive again', () => {
+      // The board polls every minute and the socket pushes on every save. Most
+      // updates change nothing this row shows.
+      const { rerender } = renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+      rerender(<BoardRow team={publicTeam()} index={0} />);
+      expect(screen.queryByTestId('board-row-change')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['a run time', { time: { ms: null, formatted: 'DNF', rank: 6, didNotFinish: true } }],
+      ['a placement sum', { placementSum: 99 }],
+      ['a place', { rank: 2 }],
+    ])('notices %s changing', (_label, patch) => {
+      const { rerender } = renderWithProviders(<BoardRow team={publicTeam()} index={0} />);
+      rerender(<BoardRow team={publicTeam(patch)} index={0} />);
+      expect(screen.getByTestId('board-row-change')).toBeInTheDocument();
+    });
+  });
 });

@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { board as copy } from '@/content/standings';
 import { boardDisplayFont, type PodiumTone } from '@/theme';
+import { BOARD_EASING, BOARD_MOTION_MS } from '@/lib/boardMotion';
 import type { PublicTeam } from '@/schemas/contracts';
 
 /**
@@ -23,6 +25,28 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
   const medal =
     team.rank !== null && team.rank <= 3 ? theme.palette.brand.podium[team.rank - 1] : undefined;
 
+  // A row can change without moving: a mark lands, a total goes up, a time is
+  // entered, and the order happens to stay as it was. The travel animation says
+  // nothing in that case, so the row says it itself.
+  const shown = [
+    team.rank,
+    team.vehicle.total,
+    team.performance.total,
+    team.time.formatted,
+    team.placementSum,
+  ].join('|');
+  const [changes, setChanges] = useState(0);
+  const previous = useRef(shown);
+  useEffect(() => {
+    if (previous.current === shown) return;
+    previous.current = shown;
+    // Counted, not toggled: two changes in a row must replay the flash, and a
+    // CSS animation only restarts when the element it is on is replaced.
+    setChanges((n) => n + 1);
+  }, [shown]);
+
+  const accent = medal?.fill ?? theme.palette.primary.main;
+
   return (
     <Box
       data-testid="board-row"
@@ -31,7 +55,7 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
       sx={{
         // Staggered so the field arrives as a sequence rather than a block, and
         // capped so a long start list does not keep the last row waiting.
-        animation: 'boardRowIn 620ms cubic-bezier(.22,.9,.3,1) both',
+        animation: `boardRowIn ${BOARD_MOTION_MS}ms ${BOARD_EASING} both`,
         animationDelay: `${Math.min(index, 12) * 55}ms`,
         '@keyframes boardRowIn': {
           from: { clipPath: 'inset(0 50% 0 50%)', opacity: 0 },
@@ -72,6 +96,30 @@ export function BoardRow({ team, index }: { team: PublicTeam; index: number }) {
             : undefined,
         }}
       >
+        {/* Keyed on the change count so it remounts and replays. Sits over the
+          row and under nothing — it must not intercept anything, and there is
+          no pointer on a scoreboard anyway. */}
+        {changes > 0 && (
+          <Box
+            key={changes}
+            data-testid="board-row-change"
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              borderRadius: 'inherit',
+              bgcolor: accent,
+              animation: `boardRowChanged ${BOARD_MOTION_MS}ms ${BOARD_EASING} both`,
+              '@keyframes boardRowChanged': {
+                from: { opacity: 0.28 },
+                to: { opacity: 0 },
+              },
+              '@media (prefers-reduced-motion: reduce)': { animation: 'none', opacity: 0 },
+            }}
+          />
+        )}
+
         <Position rank={team.rank} medal={medal} />
 
         <Box sx={{ minWidth: 0 }}>

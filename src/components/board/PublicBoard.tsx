@@ -25,6 +25,7 @@ import {
 } from '@/lib/boardScroll';
 import type { Theme } from '@mui/material/styles';
 import { boardDisplayFont, darkBoardTheme, lightBoardTheme } from '@/theme';
+import { BOARD_EASING, BOARD_MOTION_MS } from '@/lib/boardMotion';
 
 /**
  * The scoreboard as an audience sees it: a screen at the venue, or a link
@@ -289,7 +290,7 @@ export function PublicBoard({
             pointerEvents: 'none',
             background: (t: Theme) =>
               `radial-gradient(120% 70% at 50% -20%, ${t.palette.primary.dark}${light ? '1A' : '44'} 0%, transparent 62%)`,
-            animation: 'boardGlowIn 1400ms ease-out both',
+            animation: `boardGlowIn ${BOARD_MOTION_MS}ms ${BOARD_EASING} both`,
             '@keyframes boardGlowIn': { from: { opacity: 0 }, to: { opacity: 1 } },
             '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
           }}
