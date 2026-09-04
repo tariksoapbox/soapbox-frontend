@@ -19,17 +19,23 @@ describe('board motion', () => {
     'src/lib/flipRows.ts',
   ];
 
+  /**
+   * Comments are prose and may say "620ms" freely; it is the code that must
+   * not. Stripping them keeps this guard from banning its own explanation.
+   */
+  const code = (file: string) =>
+    readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+
   it.each(sources)('leaves no hard-coded duration in %s', (file) => {
-    const source = readFileSync(file, 'utf8');
     // A literal `620ms` or `1400ms` in a component is how the four drifted
     // apart in the first place.
-    expect(source).not.toMatch(/\b\d{3,4}ms\b/);
+    expect(code(file)).not.toMatch(/\b\d{3,4}ms\b/);
   });
 
   it.each(sources)('leaves no hard-coded easing curve in %s', (file) => {
-    const source = readFileSync(file, 'utf8');
-    const literalCurve = /cubic-bezier\([^)]*\)/g;
-    const found = [...source.matchAll(literalCurve)].map((m) => m[0]);
+    const found = [...code(file).matchAll(/cubic-bezier\([^)]*\)/g)].map((m) => m[0]);
     // The token itself holds one; nothing else may.
     expect(found.filter((c) => !BOARD_EASING.includes(c))).toEqual([]);
   });

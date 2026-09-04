@@ -195,4 +195,37 @@ describe('playRowMoves', () => {
     expect(a!.style.transform).toBe('');
     expect(a!.style.transition).toBe('');
   });
+
+  it('does not let a finished animation strip a running one', () => {
+    // Two saves inside 620ms is ordinary for an admin working quickly. The
+    // first animation's cleanup used to fire part-way through the second and
+    // take its transition with it, so the row snapped instead of travelling.
+    const container = makeBoard(['a', 'b']);
+    layout(container);
+    const first = measureRows(container);
+    const [a, b] = rowsOf(container);
+
+    tops.set(a!, 100);
+    tops.set(b!, 0);
+    playRowMoves(container, first);
+    vi.advanceTimersByTime(16);
+
+    // Half way through, a second change arrives.
+    vi.advanceTimersByTime(300);
+    const second = measureRows(container);
+    tops.set(a!, 0);
+    tops.set(b!, 100);
+    playRowMoves(container, second);
+    vi.advanceTimersByTime(16);
+
+    // The first cleanup would have landed about here.
+    vi.advanceTimersByTime(400);
+    expect(a!.style.transition).toContain(`${FLIP_MS}ms`);
+    expect(a!.style.zIndex).not.toBe('');
+
+    // And the second one still tidies up after itself.
+    vi.advanceTimersByTime(FLIP_MS + 200);
+    expect(a!.style.transition).toBe('');
+    expect(a!.style.zIndex).toBe('');
+  });
 });

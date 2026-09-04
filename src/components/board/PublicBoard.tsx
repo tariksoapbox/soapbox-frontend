@@ -85,7 +85,10 @@ export function PublicBoard({
    */
   loop?: boolean;
 }) {
-  const { data, isPending, error } = usePublicBoard();
+  const { data: raw, isPending, error } = usePublicBoard();
+  // A payload without a `teams` array would throw on render and take the whole
+  // screen white. The board would rather show nothing than nothing at all.
+  const data = raw && Array.isArray(raw.teams) ? raw : undefined;
   const light = variant === 'light';
 
   useLiveStandings(liveOrigin);

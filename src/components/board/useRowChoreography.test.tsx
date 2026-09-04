@@ -21,12 +21,17 @@ function Board({ teams }: { teams: PublicTeam[] | undefined }) {
 const team = (id: string) => publicTeam({ id, name: id });
 
 let play: ReturnType<typeof vi.spyOn>;
+let measure: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   play = vi.spyOn(flip, 'playRowMoves').mockReturnValue(0);
+  measure = vi.spyOn(flip, 'measureRows');
   window.matchMedia = ((q: string) => ({ matches: false, media: q })) as typeof window.matchMedia;
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 describe('useRowChoreography', () => {
   it('does not animate the first board it is given', () => {
@@ -74,5 +79,30 @@ describe('useRowChoreography', () => {
 
   it('handles a board with no data at all', () => {
     expect(() => render(<Board teams={undefined} />)).not.toThrow();
+  });
+
+  it('takes the positions again once the travel has finished', () => {
+    // At the instant a move starts, a travelling row has just been pinned back
+    // to where it began. Measuring only then would record the position it left,
+    // and a second reorder — which a fast scorer produces — would animate from
+    // a place the row is no longer in.
+    vi.useFakeTimers();
+    const { rerender } = render(<Board teams={[team('a'), team('b')]} />);
+    rerender(<Board teams={[team('b'), team('a')]} />);
+
+    const atMoveTime = measure.mock.calls.length;
+    vi.advanceTimersByTime(flip.FLIP_MS + 200);
+    expect(measure.mock.calls.length).toBeGreaterThan(atMoveTime);
+  });
+
+  it('does not re-measure a board that has gone away', () => {
+    vi.useFakeTimers();
+    const { rerender, unmount } = render(<Board teams={[team('a'), team('b')]} />);
+    rerender(<Board teams={[team('b'), team('a')]} />);
+    unmount();
+
+    const afterUnmount = measure.mock.calls.length;
+    vi.advanceTimersByTime(flip.FLIP_MS + 200);
+    expect(measure.mock.calls.length).toBe(afterUnmount);
   });
 });

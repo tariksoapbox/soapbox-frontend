@@ -35,6 +35,16 @@ const MIN_TRAVEL_PX = 1;
 export type RowPositions = Map<HTMLElement, number>;
 
 /**
+ * The cleanup still owed on each row.
+ *
+ * A second change arriving mid-flight used to be a visible fault: the first
+ * animation's cleanup fired part-way through the second one and stripped its
+ * transition, transform and z-index, so the row snapped instead of travelling.
+ * Two saves inside 620ms is an ordinary thing for an admin working quickly.
+ */
+const settling = new WeakMap<HTMLElement, number>();
+
+/**
  * Where every row is right now, in document coordinates.
  *
  * Document, not viewport: an unattended board is usually scrolling, and a
@@ -98,14 +108,22 @@ export function playRowMoves(
     }
   });
 
-  window.setTimeout(() => {
-    for (const { row } of moves) {
-      row.style.transition = '';
-      row.style.transform = '';
-      row.style.zIndex = '';
-      row.style.position = '';
-    }
-  }, FLIP_MS + 60);
+  // Per row, not one timer for the batch: the next change rarely moves exactly
+  // the same rows, and a shared timer would either clear too much or too little.
+  for (const { row } of moves) {
+    const owed = settling.get(row);
+    if (owed !== undefined) window.clearTimeout(owed);
+    settling.set(
+      row,
+      window.setTimeout(() => {
+        settling.delete(row);
+        row.style.transition = '';
+        row.style.transform = '';
+        row.style.zIndex = '';
+        row.style.position = '';
+      }, FLIP_MS + 60),
+    );
+  }
 
   return moves.length;
 }

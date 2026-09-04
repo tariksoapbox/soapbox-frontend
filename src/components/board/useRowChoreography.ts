@@ -1,7 +1,7 @@
 'use client';
 
-import { useLayoutEffect, useRef, type RefObject } from 'react';
-import { measureRows, playRowMoves, type RowPositions } from '@/lib/flipRows';
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
+import { FLIP_MS, measureRows, playRowMoves, type RowPositions } from '@/lib/flipRows';
 import type { PublicTeam } from '@/schemas/contracts';
 
 /**
@@ -22,6 +22,7 @@ export function useRowChoreography(
 ): void {
   const previous = useRef<RowPositions>(new Map());
   const order = useRef<string>('');
+  const resettle = useRef<number>(undefined);
 
   useLayoutEffect(() => {
     const next = teams?.map((t) => t.id).join(',') ?? '';
@@ -36,7 +37,22 @@ export function useRowChoreography(
       });
     }
 
-    // Ready for the next change, whenever it lands.
+    // Where the rows are now, ready for the next change.
+    //
+    // Taken again once the travel has finished, because at this instant a row
+    // that is moving has just been pinned back to where it started — measuring
+    // only here would record the position it left, and the next change would
+    // then animate from a place the row is no longer in. Two reorders in a row
+    // with nothing between them is exactly what a fast scorer produces.
     previous.current = measureRows(container.current);
+    window.clearTimeout(resettle.current);
+    if (reordered) {
+      resettle.current = window.setTimeout(() => {
+        previous.current = measureRows(container.current);
+      }, FLIP_MS + 80);
+    }
   }, [container, teams]);
+
+  // Nothing may fire into a board that has gone away.
+  useEffect(() => () => window.clearTimeout(resettle.current), []);
 }

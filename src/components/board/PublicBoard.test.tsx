@@ -336,4 +336,14 @@ describe('PublicBoard', () => {
       expect(screen.getByTestId('board-glow')).not.toBe(before);
     });
   });
+
+  it('survives a payload it cannot read, rather than going white', async () => {
+    // A screen in front of a crowd, with nobody near the machine: showing the
+    // waiting state beats showing a blank page.
+    setup({ 'GET /public/standings': { event: {}, judges: [] } as never });
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+    expect(screen.queryAllByTestId('board-row')).toHaveLength(0);
+  });
 });
